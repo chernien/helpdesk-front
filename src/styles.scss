@@ -1,0 +1,419 @@
+/* ============================================================
+   Help Desk Mediasoft — Design system v2
+   Enterprise "Trust & Authority" + charte Mediasoft.
+   Nouveaute v2 : echelle d'elevation (ombres en couches),
+   tokens de mouvement, choregraphies d'entree, micro-interactions.
+   ============================================================ */
+
+
+:root {
+  /* --- Marque Mediasoft --- */
+  --brand-500: #4a9fdc;
+  --brand-600: #2e7db8;
+  --brand-700: #246293;
+  --brand-400: #5fade4;
+  --brand-300: #7cc0ef;
+  --brand-100: #e4f1fb;
+  --brand-50:  #f2f8fd;
+
+  /* --- Encre & surfaces --- */
+  --ink:        #0f172a;
+  --ink-2:      #132036;
+  --ink-soft:   #334155;
+  --muted:      #64748b;
+  --muted-soft: #94a3b8;
+  --surface:    #ffffff;
+  --surface-2:  #f8fafc;
+  --bg:         #eef2f7;
+  --border:     #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* --- Semantique --- */
+  --success:    #15803d;
+  --success-bg: #dcfce7;
+  --warning:    #b45309;
+  --warning-bg: #fef3c7;
+  --danger:     #dc2626;
+  --danger-bg:  #fee2e2;
+  --info:       #2e7db8;
+  --info-bg:    #e4f1fb;
+  --dev:        #6d28d9;
+  --dev-bg:     #ede9fe;
+  --cours:      #0e7490;
+  --cours-bg:   #cffafe;
+
+  /* --- Elevation : lumiere douce venant du haut --- */
+  --e1: 0 1px 2px rgba(15, 23, 42, .05), 0 1px 3px rgba(15, 23, 42, .07);
+  --e2: 0 2px 4px rgba(15, 23, 42, .04), 0 8px 18px rgba(15, 23, 42, .07);
+  --e3: 0 4px 10px rgba(15, 23, 42, .06), 0 16px 36px rgba(15, 23, 42, .11);
+  --e4: 0 10px 20px rgba(15, 23, 42, .08), 0 28px 64px rgba(15, 23, 42, .16);
+  --e-brand: 0 4px 10px rgba(46, 125, 184, .22), 0 10px 24px rgba(46, 125, 184, .22);
+  --e-brand-lg: 0 8px 18px rgba(46, 125, 184, .28), 0 18px 40px rgba(46, 125, 184, .24);
+
+  /* --- Mouvement --- */
+  --ease-out:    cubic-bezier(.16, 1, .3, 1);      /* deceleration expressive */
+  --ease-spring: cubic-bezier(.34, 1.4, .64, 1);   /* leger rebond */
+  --ease-in:     cubic-bezier(.55, 0, 1, .45);
+  --t-fast: 150ms var(--ease-out);
+  --t-base: 240ms var(--ease-out);
+  --t-slow: 400ms var(--ease-out);
+
+  /* --- Rythme & formes --- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px;
+
+  --header-h: 64px;
+  --sidebar-w: 252px;
+
+  /* Police "imprimee" des numeros de ticket */
+  --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  background:
+    radial-gradient(1100px 420px at 18% -8%, rgba(74, 159, 220, .10), transparent 60%),
+    radial-gradient(900px 380px at 95% -12%, rgba(109, 40, 217, .05), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { margin: 0; line-height: 1.22; font-weight: 800; letter-spacing: -.022em; }
+h1 { font-size: 27px; }
+h2 { font-size: 20px; }
+h3 { font-size: 17px; }
+p  { margin: 0; }
+
+a { color: var(--brand-600); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+::selection { background: var(--brand-100); }
+
+/* Scrollbar discrete */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--muted-soft); }
+::-webkit-scrollbar-track { background: transparent; }
+
+:focus-visible {
+  outline: 3px solid var(--brand-400);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* ============================================================
+   Choregraphies d'entree (respectent prefers-reduced-motion)
+   ============================================================ */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes rowIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes bellRing {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-12deg); }
+  45% { transform: rotate(8deg); }
+  60% { transform: rotate(-6deg); }
+  75% { transform: rotate(3deg); }
+}
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(24px, -30px) scale(1.08); }
+}
+
+/* ============================================================
+   Composants partages
+   ============================================================ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e1);
+  transition: box-shadow var(--t-base), transform var(--t-base), border-color var(--t-base);
+}
+/* Carte interactive : leve a l'approche */
+.card.lift { cursor: pointer; }
+.card.lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--e3);
+  border-color: var(--border-strong);
+}
+.card.lift:active { transform: translateY(-1px); box-shadow: var(--e2); }
+
+/* --- Boutons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 0 var(--sp-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast),
+              box-shadow var(--t-base), color var(--t-fast), transform var(--t-fast);
+  white-space: nowrap;
+  will-change: transform;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn:not(:disabled):active { transform: translateY(1px) scale(.985); }
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--brand-400), var(--brand-600));
+  color: #fff;
+  box-shadow: var(--e-brand), inset 0 1px 0 rgba(255, 255, 255, .25);
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--e-brand-lg), inset 0 1px 0 rgba(255, 255, 255, .25);
+  filter: saturate(1.08);
+}
+
+.btn-ghost {
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-color: var(--border-strong);
+  box-shadow: var(--e1);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--muted-soft);
+  transform: translateY(-1px);
+  box-shadow: var(--e2);
+}
+
+.btn-danger { background: var(--danger); color: #fff; box-shadow: var(--e1); }
+.btn-danger:hover:not(:disabled) { background: #b91c1c; box-shadow: var(--e2); }
+
+.btn-sm { min-height: 36px; padding: 0 var(--sp-3); font-size: 14px; }
+
+/* --- Formulaires --- */
+.field { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.label { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+.label .req { color: var(--danger); margin-left: 2px; }
+
+.input, .select, .textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px var(--sp-3);
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, .04);
+  transition: border-color var(--t-fast), box-shadow var(--t-base);
+}
+.input:hover, .select:hover, .textarea:hover { border-color: var(--muted-soft); }
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 4px var(--brand-100), var(--e1);
+}
+.input.is-invalid, .select.is-invalid, .textarea.is-invalid {
+  border-color: var(--danger);
+}
+.input.is-invalid:focus, .textarea.is-invalid:focus {
+  box-shadow: 0 0 0 4px var(--danger-bg);
+}
+.textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
+
+.hint  { font-size: 13px; color: var(--muted); }
+.error { font-size: 13px; color: var(--danger); font-weight: 500; }
+
+/* --- Badges d'etat : la signature visuelle de l'app --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .05);
+}
+.badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+}
+.badge-ouvert  { background: var(--info-bg);    color: var(--info); }
+.badge-cours   { background: var(--cours-bg);   color: var(--cours); }
+.badge-dev     { background: var(--dev-bg);     color: var(--dev); }
+.badge-attente { background: var(--warning-bg); color: var(--warning); }
+.badge-test    { background: #ede9fe;         color: #6d28d9; }
+.badge-cloture { background: var(--success-bg); color: var(--success); }
+.badge-annule  { background: #f1f5f9; color: #64748b; text-decoration: line-through; text-decoration-thickness: 1px; }
+.badge-neutre  { background: var(--surface-2);  color: var(--muted); }
+
+.prio { font-size: 12px; font-weight: 700; }
+.prio-bloquante { color: var(--danger); font-weight: 800; }
+.prio-grave     { color: var(--warning); }
+.prio-mineur    { color: var(--muted); }
+
+/* --- Pastilles produit (couleur stable par produit) --- */
+.pp {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .06);
+}
+.pp-0 { background: #e4f1fb; color: #1d5c8c; }
+.pp-1 { background: #dcfce7; color: #166534; }
+.pp-2 { background: #fef3c7; color: #92400e; }
+.pp-3 { background: #ede9fe; color: #5b21b6; }
+.pp-4 { background: #ffe4e6; color: #9f1239; }
+.pp-5 { background: #ccfbf1; color: #115e59; }
+
+/* --- Tableau --- */
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.table th {
+  text-align: left;
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  background: var(--surface-2);
+}
+.table td { padding: var(--sp-4); border-bottom: 1px solid var(--border); vertical-align: middle; }
+.table tbody tr:last-child td { border-bottom: none; }
+.table .num { font-variant-numeric: tabular-nums; }
+
+/* --- Etats vides & chargement --- */
+.empty { padding: var(--sp-7) var(--sp-5); text-align: center; color: var(--muted); }
+.empty h3 { color: var(--ink-soft); margin-bottom: var(--sp-2); }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, #e9eef5 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--r-sm);
+}
+
+.spinner {
+  width: 17px; height: 17px;
+  border: 2.5px solid rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+/* --- Utilitaires --- */
+.row      { display: flex; align-items: center; gap: var(--sp-3); }
+.row-wrap { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.spacer   { flex: 1; }
+.stack    { display: flex; flex-direction: column; gap: var(--sp-4); }
+.grid-2   { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-4); }
+.sr-only  {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ============================================================
+   SIGNATURE : LA FORME "TICKET"
+   Talon detachable, ligne de perforation, encoches decoupees.
+   Les encoches sont de vraies decoupes (mask) : l'ombre est donc
+   portee par un parent .ticket-ombre (drop-shadow suit la forme).
+   ============================================================ */
+.ticket-ombre {
+  filter: drop-shadow(0 1px 1.5px rgba(15, 23, 42, .07)) drop-shadow(0 8px 18px rgba(15, 23, 42, .07));
+  transition: filter var(--t-base), transform var(--t-base);
+}
+
+/* Perforation verticale : talon a gauche, large de --talon */
+.ticket-v {
+  --encoche: 10px;
+  --talon: 118px;
+  -webkit-mask:
+    radial-gradient(circle var(--encoche) at var(--talon) 0, #0000 98%, #000 100%) top / 100% 51% no-repeat,
+    radial-gradient(circle var(--encoche) at var(--talon) 100%, #0000 98%, #000 100%) bottom / 100% 51% no-repeat;
+  mask:
+    radial-gradient(circle var(--encoche) at var(--talon) 0, #0000 98%, #000 100%) top / 100% 51% no-repeat,
+    radial-gradient(circle var(--encoche) at var(--talon) 100%, #0000 98%, #000 100%) bottom / 100% 51% no-repeat;
+}
+
+/* Perforation horizontale : talon en haut, haut de --talon */
+.ticket-h {
+  --encoche: 12px;
+  --talon: 92px;
+  -webkit-mask:
+    radial-gradient(circle var(--encoche) at 0 var(--talon), #0000 98%, #000 100%) left / 51% 100% no-repeat,
+    radial-gradient(circle var(--encoche) at 100% var(--talon), #0000 98%, #000 100%) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle var(--encoche) at 0 var(--talon), #0000 98%, #000 100%) left / 51% 100% no-repeat,
+    radial-gradient(circle var(--encoche) at 100% var(--talon), #0000 98%, #000 100%) right / 51% 100% no-repeat;
+}
+
+/* Petit code-barres decoratif */
+.code-barres {
+  display: inline-block;
+  height: 30px;
+  width: 92px;
+  opacity: .55;
+  background: repeating-linear-gradient(90deg,
+    currentColor 0 2px, transparent 2px 4px,
+    currentColor 4px 5px, transparent 5px 8px,
+    currentColor 8px 11px, transparent 11px 12px,
+    currentColor 12px 13px, transparent 13px 16px);
+}
+
+.mono { font-family: var(--mono); letter-spacing: -.01em; }
+
+/* Couleur d'etat reutilisable (talons, pastilles) */
+[data-etat='Ouvert']                   { --tint: var(--info);    --tint-bg: var(--info-bg); }
+[data-etat='En cours']                 { --tint: var(--cours);   --tint-bg: var(--cours-bg); }
+[data-etat='En développement']         { --tint: var(--dev);     --tint-bg: var(--dev-bg); }
+[data-etat='Test interne']             { --tint: #6d28d9;        --tint-bg: #ede9fe; }
+[data-etat='En attente de validation'] { --tint: var(--warning); --tint-bg: var(--warning-bg); }
+[data-etat='Clôturé']                  { --tint: var(--success); --tint-bg: var(--success-bg); }
+[data-etat='Annulé']                   { --tint: #64748b;        --tint-bg: #f1f5f9; }

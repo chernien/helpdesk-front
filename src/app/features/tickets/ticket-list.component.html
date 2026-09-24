@@ -1,0 +1,241 @@
+<!-- ============ Accueil personnalise ============ -->
+<section class="accueil anim-1" [class.avec-illustration]="auth.estClient()">
+  <div class="accueil-txt">
+    <p class="accueil-date">{{ aujourdhui | date:'EEEE d MMMM' }}</p>
+    <h1>{{ salutation() }}</h1>
+    <p class="accueil-sous">{{ sousTitreAccueil() }}</p>
+    <!-- Un developpeur ne cree pas de tickets : pas de bouton de creation pour lui. -->
+    @if (!auth.estDev()) {
+      <a routerLink="/tickets/nouveau" class="btn btn-primary accueil-cta">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        {{ auth.estClient() ? 'Nouvelle demande' : 'Nouveau ticket' }}
+      </a>
+    }
+  </div>
+  @if (auth.estClient()) {
+    <img src="assets/illustrations/centre-appel.svg" alt="" class="accueil-illustration" aria-hidden="true" />
+  }
+</section>
+
+<div class="entete anim-1">
+  <div>
+    <h2 class="titre-liste">{{ titrePage() }}</h2>
+    <p class="sous-titre">
+      {{ total() }} ticket{{ total() > 1 ? 's' : '' }}
+      @if (filtresActifs()) { <span>· filtré</span> }
+    </p>
+  </div>
+</div>
+
+<!-- ============ Indicateurs cliquables ============ -->
+<div class="kpis anim-2">
+  <button class="kpi t-ouvert" [class.actif]="filtreEtat() === 'Ouvert'"
+          (click)="filtrerParCarte('Ouvert')"
+          [attr.aria-pressed]="filtreEtat() === 'Ouvert'">
+    <span class="kpi-ico" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2" />
+        <path d="M12 8v4.2l2.8 1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+    </span>
+    <span class="kpi-txt">
+      <strong class="num">{{ compteurs().ouvert }}</strong>
+      <small>Ouverts</small>
+    </span>
+    <span class="kpi-fleche" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
+  </button>
+
+  <button class="kpi t-cours" [class.actif]="filtreEtat() === 'En cours'"
+          (click)="filtrerParCarte('En cours')"
+          [attr.aria-pressed]="filtreEtat() === 'En cours'">
+    <span class="kpi-ico" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M5 12a7 7 0 0113.2-3.2M19 12a7 7 0 01-13.2 3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <path d="M18 4v5h-5M6 20v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
+    <span class="kpi-txt">
+      <strong class="num">{{ compteurs().cours }}</strong>
+      <small>En cours</small>
+    </span>
+    <span class="kpi-fleche" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
+  </button>
+
+  <button class="kpi t-dev" [class.actif]="filtreEtat() === 'En développement'"
+          (click)="filtrerParCarte('En développement')"
+          [attr.aria-pressed]="filtreEtat() === 'En développement'">
+    <span class="kpi-ico" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 5l-3 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
+    <span class="kpi-txt">
+      <strong class="num">{{ compteurs().dev }}</strong>
+      <small>En développement</small>
+    </span>
+    <span class="kpi-fleche" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
+  </button>
+</div>
+
+<!-- ============ Filtres ============ -->
+<section class="card filtres anim-3" aria-label="Filtres">
+  <div class="champ-recherche">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2" />
+      <path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+    </svg>
+    <input
+      type="search"
+      class="input"
+      placeholder="Rechercher un intitulé, un email, un client…"
+      [ngModel]="recherche()"
+      (ngModelChange)="surRecherche($event)"
+      aria-label="Rechercher un ticket" />
+  </div>
+
+  <div class="field-inline">
+    <label class="sr-only" for="f-etat">Filtrer par état</label>
+    <select id="f-etat" class="select" [ngModel]="filtreEtat()"
+            (ngModelChange)="filtreEtat.set($event); surFiltre()">
+      <option value="">Tous les états</option>
+      @for (etat of etats(); track etat) {
+        <option [value]="etat">{{ etat }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field-inline">
+    <label class="sr-only" for="f-produit">Filtrer par produit</label>
+    <select id="f-produit" class="select" [ngModel]="filtreProduit()"
+            (ngModelChange)="filtreProduit.set($event); surFiltre()">
+      <option value="">Tous les produits</option>
+      @for (produit of produits(); track produit.productId) {
+        <option [value]="produit.nom">{{ produit.nom }}</option>
+      }
+    </select>
+  </div>
+
+  @if (filtresActifs()) {
+    <button class="btn btn-ghost btn-sm" (click)="reinitialiser()">Réinitialiser</button>
+  }
+</section>
+
+<!-- ============ Liste : chaque ticket est un vrai ticket ============ -->
+<section class="liste anim-4" aria-label="Liste des tickets">
+  @if (chargement()) {
+    <div class="stack" aria-busy="true" aria-label="Chargement des tickets">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="skeleton tk-skel"></div>
+      }
+    </div>
+  } @else if (erreur()) {
+    <div class="card empty">
+      <h3>Chargement impossible</h3>
+      <p>{{ erreur() }}</p>
+      <button class="btn btn-ghost" (click)="charger()" style="margin-top:16px">Réessayer</button>
+    </div>
+  } @else if (tickets().length === 0) {
+    <div class="vide ticket-ombre">
+      <div class="vide-ticket ticket-h">
+        <div class="vide-talon">
+          <span class="mono">N° —</span>
+          <span class="code-barres" aria-hidden="true"></span>
+        </div>
+        <div class="vide-corps">
+          <h3>{{ filtresActifs() ? 'Aucun ticket ne correspond' : 'Aucun ticket pour le moment' }}</h3>
+          <p>
+            @if (filtresActifs()) { Essayez d'élargir vos critères de recherche. }
+            @else if (auth.estClient()) { Un souci sur votre ERP ? Déclarez-le, nous prenons le relais. }
+            @else { La file est vide : aucune demande en attente. }
+          </p>
+          @if (filtresActifs()) {
+            <button class="btn btn-ghost" (click)="reinitialiser()">Réinitialiser les filtres</button>
+          } @else if (auth.estDev()) {
+            <p class="hint">Les tickets qu'un collaborateur vous assignera apparaîtront ici.</p>
+          } @else {
+            <a routerLink="/tickets/nouveau" class="btn btn-primary">{{ auth.estClient() ? 'Créer ma première demande' : 'Créer un ticket' }}</a>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <ul class="tickets">
+      @for (ticket of tickets(); track ticket.id) {
+        <li [style.animation-delay.ms]="($index < 12 ? $index : 12) * 45">
+          <a class="ticket-ombre tk-lien" [routerLink]="['/tickets', ticket.id]"
+             [attr.aria-label]="'Ticket ' + ticket.id + ' : ' + (ticket.intitule || 'sans intitulé') + ', ' + (ticket.etat || 'état non défini')">
+            <article class="tk ticket-v" [attr.data-etat]="ticket.etat">
+              <!-- Talon : numero et date, teinte de l'etat -->
+              <div class="tk-talon">
+                <span class="tk-label">Ticket</span>
+                <span class="tk-num mono">#{{ ticket.id }}</span>
+                <span class="tk-date mono">{{ ticket.dateDemande ? (ticket.dateDemande | date:'dd.MM.yy') : '—' }}</span>
+              </div>
+
+              <div class="tk-corps">
+                <div class="tk-haut">
+                  <span [class]="classeEtat(ticket.etat)">{{ ticket.etat || 'Non défini' }}</span>
+                  <span [class]="classeImportance(ticket.importance)">{{ ticket.importance }}</span>
+                </div>
+                <h3 class="tk-titre">{{ ticket.intitule || 'Sans intitulé' }}</h3>
+                <div class="tk-meta">
+                  @if (ticket.produit) {
+                    <span [class]="classeProduit(ticket.produit)">{{ ticket.produit }}</span>
+                  }
+                  @if (ticket.module) { <span class="tk-info">{{ ticket.module }}</span> }
+                  @if (!auth.estClient()) {
+                    <span class="tk-info tk-client">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M4 20V8l6-4v16M10 20V10l10 3v7M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      {{ ticket.client || ticket.email || '—' }}
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <div class="tk-fin">
+                @if (ticket.collaborateurId) {
+                  <span class="tk-resp" [title]="'Responsable : ' + ticket.collaborateur">
+                    {{ (ticket.collaborateur || '?').slice(0, 2).toUpperCase() }}
+                  </span>
+                } @else {
+                  <span class="tk-resp libre" title="Non assigné">?</span>
+                }
+                <svg class="tk-fleche" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+            </article>
+          </a>
+        </li>
+      }
+    </ul>
+
+    @if (nbPages() > 1) {
+      <nav class="pagination" aria-label="Pagination">
+        <button class="btn btn-ghost btn-sm" (click)="changerPage(-1)" [disabled]="page() === 1">
+          Précédent
+        </button>
+        <span class="page-info">Page {{ page() }} sur {{ nbPages() }}</span>
+        <button class="btn btn-ghost btn-sm" (click)="changerPage(1)" [disabled]="page() === nbPages()">
+          Suivant
+        </button>
+      </nav>
+    }
+  }
+</section>

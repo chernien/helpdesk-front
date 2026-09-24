@@ -1,0 +1,170 @@
+<div class="page">
+  <!-- ============ Panneau illustre ============ -->
+  <aside class="vitrine">
+    <hd-logo class="vitrine-logo" [hauteur]="40" />
+
+    <div class="scene" aria-hidden="true">
+      <div class="halo"></div>
+      <img src="assets/illustrations/centre-appel.svg" alt="" class="illustration" />
+
+      <!-- Deux apercus concrets du service -->
+      <div class="bulle bulle-ticket">
+        <span class="bulle-ico bleu">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12a7 7 0 0113.2-3.2M19 12a7 7 0 01-13.2 3.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            <path d="M18 4v5h-5M6 20v-5h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <span class="bulle-txt">
+          <strong>Ticket #1301</strong>
+          <small>Passé à « En cours »</small>
+        </span>
+      </div>
+
+      <div class="bulle bulle-reponse">
+        <span class="bulle-ico vert">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <span class="bulle-txt">
+          <strong>Réponse de votre interlocuteur</strong>
+          <small>« Correctif livré ce matin. »</small>
+        </span>
+      </div>
+    </div>
+
+    <div class="vitrine-texte">
+      <h2>Un souci sur votre ERP ? On s'en occupe.</h2>
+      <p>Déclarez votre demande, suivez chaque étape et échangez avec le spécialiste de votre produit, au même endroit.</p>
+    </div>
+
+    <p class="credit">Illustration : <a href="https://storyset.com/business" target="_blank" rel="noopener">Storyset</a></p>
+  </aside>
+
+  <!-- ============ Formulaire ============ -->
+  <main class="cote-form">
+    <div class="form-box">
+      <hd-logo class="form-logo" [hauteur]="40" />
+
+      <div class="ticket-ombre">
+      <div class="billet ticket-h">
+        <!-- Talon du billet d'acces -->
+        <div class="billet-talon" aria-hidden="true">
+          <div>
+            <span class="billet-label">Billet d'accès</span>
+            <span class="billet-titre">Espace support</span>
+          </div>
+          <div class="billet-droite">
+            <span class="code-barres"></span>
+            <span class="billet-num mono">N° {{ numeroBillet }}</span>
+          </div>
+        </div>
+
+        <div class="billet-corps">
+      <h1>Bon retour parmi nous</h1>
+      <p class="sous-titre">Connectez-vous à votre espace support Mediasoft.</p>
+
+      @if (erreur()) {
+        <div class="alerte" role="alert">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+            <path d="M12 7v6M12 16.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <span>{{ erreur() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="soumettre()" class="stack" novalidate>
+        <div class="field">
+          <label class="label" for="username">Adresse email <span class="req">*</span></label>
+          <div class="champ-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3.5" y="5.5" width="17" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8" />
+              <path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <input
+              id="username"
+              type="email"
+              class="input"
+              [class.is-invalid]="username.touched && username.invalid"
+              formControlName="username"
+              autocomplete="username"
+              inputmode="email"
+              placeholder="prenom.nom@societe.tn"
+              [attr.aria-invalid]="username.touched && username.invalid"
+              aria-describedby="username-aide" />
+          </div>
+          @if (username.touched && username.hasError('required')) {
+            <p class="error" role="alert">L'adresse email est obligatoire.</p>
+          } @else if (username.touched && username.hasError('email')) {
+            <p class="error" role="alert">Cette adresse email n'est pas valide.</p>
+          } @else {
+            <p class="hint" id="username-aide">Votre email est votre identifiant de connexion.</p>
+          }
+        </div>
+
+        <div class="field">
+          <label class="label" for="password">Mot de passe <span class="req">*</span></label>
+          <div class="champ-ico pwd">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="4.5" y="10.5" width="15" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8" />
+              <path d="M8 10.5V8a4 4 0 018 0v2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <input
+              id="password"
+              [type]="motDePasseVisible() ? 'text' : 'password'"
+              class="input"
+              [class.is-invalid]="password.touched && password.invalid"
+              formControlName="password"
+              autocomplete="current-password"
+              [attr.aria-invalid]="password.touched && password.invalid" />
+            <button
+              type="button"
+              class="pwd-toggle"
+              (click)="basculerVisibilite()"
+              [attr.aria-label]="motDePasseVisible() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+              @if (motDePasseVisible()) {
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.4 5.2A9.6 9.6 0 0112 5c5 0 9 5 9 7a10.6 10.6 0 01-2.4 3.2M6.3 6.9C4 8.4 3 11 3 12c0 2 4 7 9 7 1.2 0 2.3-.3 3.3-.7"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              } @else {
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 12s3.6-7 9-7 9 7 9 7-3.6 7-9 7-9-7-9-7z" stroke="currentColor" stroke-width="2" />
+                  <circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="2" />
+                </svg>
+              }
+            </button>
+          </div>
+          @if (password.touched && password.hasError('required')) {
+            <p class="error" role="alert">Le mot de passe est obligatoire.</p>
+          }
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-large" [disabled]="chargement()">
+          @if (chargement()) {
+            <span class="spinner" aria-hidden="true"></span>
+            <span>Connexion en cours…</span>
+          } @else {
+            <span>Se connecter</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          }
+        </button>
+      </form>
+        </div>
+      </div>
+      </div>
+
+      <div class="aide">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+          <path d="M9.6 9.3a2.5 2.5 0 014.8 1c0 1.7-2.4 2.1-2.4 3.7M12 17v.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+        <span>Pas encore de compte ? Contactez votre interlocuteur Mediasoft : il vous créera un accès.</span>
+      </div>
+    </div>
+  </main>
+</div>

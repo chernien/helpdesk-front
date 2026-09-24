@@ -1,0 +1,156 @@
+:host { display: block; }
+
+.anim-1 { animation: pageIn 380ms var(--ease-out) both; }
+.anim-2 { animation: pageIn 380ms var(--ease-out) 60ms both; }
+.anim-3 { animation: pageIn 380ms var(--ease-out) 120ms both; }
+
+.entete { margin-bottom: var(--sp-5); }
+.sous-titre { color: var(--muted); font-size: 14px; margin-top: 2px; }
+
+.filtres { padding: var(--sp-4); margin-bottom: var(--sp-5); }
+.champ-recherche { position: relative; }
+.champ-recherche svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+  transition: color var(--t-fast);
+}
+.champ-recherche:focus-within svg { color: var(--brand-600); }
+.champ-recherche .input { padding-left: 40px; }
+
+/* ============================================================
+   Timeline : rail vertical + noeuds colores + cartes
+   ============================================================ */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+/* Le rail */
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--brand-400), var(--brand-100));
+}
+
+.evt {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  padding-left: 0;
+  margin-bottom: var(--sp-4);
+  animation: rowIn 380ms var(--ease-out) both;
+}
+
+.noeud {
+  position: relative;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--bg), var(--e2);
+  transition: transform var(--t-base);
+}
+.evt:hover .noeud { transform: scale(1.12); }
+.n-creation    { background: linear-gradient(140deg, var(--brand-400), var(--brand-600)); }
+.n-etat        { background: linear-gradient(140deg, #22d3ee, #0e7490); }
+.n-assignation { background: linear-gradient(140deg, #a78bfa, #6d28d9); }
+
+.evt-carte {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  padding: var(--sp-4) var(--sp-5);
+  text-decoration: none;
+  color: inherit;
+}
+.evt-carte:hover { text-decoration: none; }
+
+.evt-phrase {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.evt-meta {
+  margin: var(--sp-3) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.evt-meta > div { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+.evt-meta dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.evt-meta dt svg { color: var(--brand-500); flex-shrink: 0; }
+.evt-meta dt::after { content: ' :'; }
+.evt-meta dd {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--muted);
+  word-break: break-word;
+  min-width: 0;
+}
+.evt-meta .num { font-variant-numeric: tabular-nums; }
+
+.evt-skel { height: 118px; border-radius: var(--r-lg); }
+
+.charger-plus {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-4) 0 var(--sp-2);
+}
+.spinner-fonce { border-color: rgba(51, 65, 85, .25); border-top-color: var(--ink-soft); }
+
+@media (max-width: 640px) {
+  .timeline::before { left: 15px; }
+  .noeud { width: 32px; height: 32px; }
+  .noeud svg { width: 13px; height: 13px; }
+  .evt-carte { padding: var(--sp-4); }
+}
+
+.evt-message {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+  word-break: break-word;
+  /* Icone de bulle devant le texte, comme dans le suivi du ticket */
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.evt-message-icone { width: 22px; height: 22px; flex-shrink: 0; object-fit: contain; }
+.evt-message-texte { min-width: 0; padding-top: 1px; white-space: pre-wrap; }
+.n-commentaire { background: linear-gradient(140deg, #fbbf24, #d97706); }
+.n-maj { background: linear-gradient(140deg, #94a3b8, #475569); }
+.n-validation { background: linear-gradient(140deg, #4ade80, #15803d); }
+.n-annulation { background: linear-gradient(140deg, #fb7185, #be123c); }

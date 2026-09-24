@@ -1,0 +1,66 @@
+<div class="combo" [class.ouvert]="ouvert()">
+  <div class="saisie">
+    <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 20V8l6-4v16M10 20V10l10 3v7M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+
+    <input
+      #champ
+      [id]="inputId"
+      type="text"
+      class="input"
+      [class.is-invalid]="invalide"
+      [class.choisi]="selection()"
+      role="combobox"
+      autocomplete="off"
+      aria-autocomplete="list"
+      [attr.aria-expanded]="ouvert()"
+      [attr.aria-controls]="listeId"
+      [attr.aria-activedescendant]="ouvert() && actif() >= 0 ? inputId + '-opt-' + actif() : null"
+      placeholder="Tapez le nom de la société…"
+      [value]="texte()"
+      (input)="surSaisie(champ.value)"
+      (focus)="surFocus()"
+      (keydown)="surClavier($event)" />
+
+    @if (chargement()) {
+      <span class="spinner-mini" aria-hidden="true"></span>
+    } @else if (texte()) {
+      <button type="button" class="effacer" (click)="effacer(champ)" aria-label="Effacer la société">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+    }
+  </div>
+
+  @if (ouvert()) {
+    <ul class="liste" role="listbox" [id]="listeId">
+      @if (!chargement() && resultats().length === 0) {
+        <li class="vide" role="presentation">
+          Aucune société ne correspond à « {{ texte() }} ».
+        </li>
+      }
+      @for (societe of resultats(); track societe.tiers) {
+        <li
+          [id]="inputId + '-opt-' + $index"
+          role="option"
+          class="option"
+          [class.actif]="$index === actif()"
+          [attr.aria-selected]="$index === actif()"
+          (mousedown)="$event.preventDefault()"
+          (mouseenter)="actif.set($index)"
+          (click)="choisir(societe)">
+          <span class="avatar" aria-hidden="true">{{ societe.nom.slice(0, 2) }}</span>
+          <span class="txt">
+            <strong>{{ societe.nom }}</strong>
+            <small>{{ societe.tiers }}</small>
+          </span>
+        </li>
+      }
+      @if (resultats().length === 50) {
+        <li class="plus" role="presentation">50 premiers résultats — précisez votre recherche.</li>
+      }
+    </ul>
+  }
+</div>

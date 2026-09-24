@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Help Desk Mediasoft">
+  <defs>
+    <linearGradient id="fond" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1B2B45"/>
+      <stop offset="1" stop-color="#0B1426"/>
+    </linearGradient>
+    <linearGradient id="billet" x1="14" y1="31" x2="106" y2="89" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6BC0F5"/>
+      <stop offset="1" stop-color="#2A70B8"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="url(#fond)"/>
+  <path d="M28 31H36A8 8 0 0 0 52 31H92A14 14 0 0 1 106 45V75A14 14 0 0 1 92 89H52A8 8 0 0 0 36 89H28A14 14 0 0 1 14 75V45A14 14 0 0 1 28 31Z" fill="url(#billet)"/>
+  <path d="M44 42V78" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4 5"/>
+  <path d="M63 60.5L71 68L86 52" stroke="#FFFFFF" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

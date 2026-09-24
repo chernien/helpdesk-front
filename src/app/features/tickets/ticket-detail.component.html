@@ -1,0 +1,506 @@
+@if (chargement()) {
+  <div class="stack">
+    <div class="skeleton" style="height:28px;width:280px"></div>
+    <div class="skeleton" style="height:220px;border-radius:14px"></div>
+  </div>
+} @else if (introuvable()) {
+  <div class="card empty">
+    <h3>Ticket introuvable</h3>
+    <p>Ce ticket n'existe pas ou ne vous est pas accessible.</p>
+    <a routerLink="/tickets" class="btn btn-ghost" style="margin-top:16px">Retour aux tickets</a>
+  </div>
+} @else if (ticket()) {
+  @if (ticket()!; as t) {
+  <nav class="fil" aria-label="Fil d'Ariane">
+    <a routerLink="/tickets">Tickets</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">#{{ t.id }}</span>
+  </nav>
+
+  <!-- En-tete en forme de ticket : talon (numero, etat) + corps -->
+  <div class="ticket-ombre entete-ombre">
+    <header class="tete ticket-v" [attr.data-etat]="t.etat">
+      <div class="tete-talon">
+        <span class="tete-label">Ticket</span>
+        <span class="tete-num mono">#{{ t.id }}</span>
+        <span class="tete-date mono">{{ t.dateDemande ? (t.dateDemande | date:'dd.MM.yyyy') : '—' }}</span>
+      </div>
+      <div class="tete-corps">
+        <div class="row-wrap">
+          <span [class]="classeEtat(t.etat)">{{ t.etat || 'Non défini' }}</span>
+          <span [class]="classeImportance(t.importance)">{{ t.importance }}</span>
+          @if (t.produit) { <span class="tete-produit">{{ t.produit }}@if (t.module) { · {{ t.module }} }</span> }
+        </div>
+        <h1>{{ t.intitule || 'Sans intitulé' }}</h1>
+        <p class="tete-client">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 20V8l6-4v16M10 20V10l10 3v7M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          {{ t.client || '—' }} <span class="tete-email">{{ t.email }}</span>
+        </p>
+      </div>
+      <div class="tete-fin">
+        <span class="code-barres" aria-hidden="true"></span>
+        @if (auth.estAdmin()) {
+          <div class="tete-boutons">
+            <button class="btn btn-ghost btn-sm" (click)="edition.set(true)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Modifier
+            </button>
+            <button class="btn btn-ghost btn-sm danger-txt" (click)="supprimer()">Supprimer</button>
+          </div>
+        }
+      </div>
+    </header>
+  </div>
+
+  <div class="colonnes">
+    <div class="stack">
+
+      <!-- ============ Actions (collaborateurs et admins) ============ -->
+      @if (peutTraiter()) {
+        <section class="card bloc actions-bloc">
+          <h2 class="bloc-titre">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12L13 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            </svg>
+            Actions
+          </h2>
+
+          @if (estTermine()) {
+            <div class="termine" role="status">
+              Ce ticket est <strong>{{ t.etat?.toLowerCase() }}</strong> : il n'évolue plus.
+            </div>
+          } @else {
+            <!-- Responsable -->
+            <div class="responsable">
+              <div class="responsable-actuel">
+                <span class="label">Responsable</span>
+                @if (t.collaborateurId) {
+                  <strong>{{ estResponsable() ? 'Vous' : (nomResponsable() || '—') }}</strong>
+                } @else {
+                  <strong class="libre">Non assigné — file {{ t.produit }}</strong>
+                }
+              </div>
+
+              @if (!auth.estDev()) {
+                <div class="responsable-actions">
+                  @if (peutSenOccuper()) {
+                    <button type="button" class="btn btn-sm"
+                            [class.btn-primary]="collaborateurChoisi() === auth.user()?.id"
+                            [class.btn-ghost]="collaborateurChoisi() !== auth.user()?.id"
+                            [attr.aria-pressed]="collaborateurChoisi() === auth.user()?.id"
+                            (click)="jeMenOccupe()" [disabled]="!!actionEnCours()">
+                      Je m'en occupe
+                    </button>
+                  }
+                  <label class="sr-only" for="confier">Confier le ticket à un collaborateur ou un développeur</label>
+                  <select id="confier" class="select select-sm" [ngModel]="collaborateurChoisi()"
+                          (ngModelChange)="collaborateurChoisi.set($event)" [disabled]="!!actionEnCours()">
+                    <option [ngValue]="null">Confier à…</option>
+                    @if (collegues().length) {
+                      <optgroup label="Collègues">
+                        @for (c of collegues(); track c.id) {
+                          @if (c.id !== t.collaborateurId) {
+                            <option [ngValue]="c.id">{{ c.nomComplet || c.email }}</option>
+                          }
+                        }
+                      </optgroup>
+                    }
+                    @if (developpeurs().length) {
+                      <optgroup label="Développeurs">
+                        @for (c of developpeurs(); track c.id) {
+                          @if (c.id !== t.collaborateurId) {
+                            <option [ngValue]="c.id">{{ c.nomComplet || c.email }}</option>
+                          }
+                        }
+                      </optgroup>
+                    }
+                  </select>
+                </div>
+                @if (collaborateurs().length === 0) {
+                  <p class="hint">Aucun collaborateur n'est affecté au produit {{ t.produit }}.</p>
+                }
+              }
+            </div>
+
+            <!-- Developpement termine : le collaborateur teste puis tranche -->
+            @if (estEnTestInterne() && !auth.estDev()) {
+              <div class="bandeau-test" role="status">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M9 3h6M10 3v5.2L4.7 17a3 3 0 002.6 4.5h9.4A3 3 0 0019.3 17L14 8.2V3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M7.5 14h9" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+                </svg>
+                <div>
+                  <strong>Le développement est terminé : testez en interne.</strong>
+                  <p>Test concluant → envoyez le ticket en validation client. Sinon, renvoyez-le au développeur en expliquant le problème.</p>
+                  <div class="bandeau-test-actions">
+                    <button type="button" class="btn btn-sm btn-primary" (click)="choisirEtat('En attente de validation')">
+                      Test concluant → validation client
+                    </button>
+                    <button type="button" class="btn btn-sm btn-ghost" (click)="choisirEtat('En développement')">
+                      Renvoyer au développeur
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+            @if (estEnTestInterne() && auth.estDev()) {
+              <p class="hint">Votre développement est en test interne : un collaborateur va valider ou vous renvoyer le ticket.</p>
+            }
+
+            <!-- Choix de l'action (rien n'est envoye avant Valider).
+                 En phase de test interne, seuls la banniere et « Annuler » restent (sauf admin). -->
+            <div class="etats" role="group" aria-label="Choisir la prochaine étape du ticket">
+              @if (etatsVisibles()) {
+              @for (a of actionsEtat(); track a.etat) {
+                <button type="button" class="etat-btn" [attr.data-etat]="a.icone"
+                        [class.actif]="t.etat === a.etat"
+                        [class.choisi]="etatChoisi() === a.etat"
+                        [attr.aria-pressed]="etatChoisi() === a.etat"
+                        [disabled]="etatIndisponible(a.etat) || !!actionEnCours()"
+                        [title]="etatIndisponible(a.etat) && t.etat !== a.etat ? 'Revenir à une étape précédente est réservé à l\'administrateur.' : ''"
+                        (click)="choisirEtat(a.etat)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    @switch (a.icone) {
+                      @case ('ouvert') { <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" /> }
+                      @case ('cours') {
+                        <path d="M5 12a7 7 0 0113.2-3.2M19 12a7 7 0 01-13.2 3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        <path d="M18 4v5h-5M6 20v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      }
+                      @case ('dev') { <path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /> }
+                      @case ('test') {
+                        <path d="M9 3h6M10 3v5.2L4.7 17a3 3 0 002.6 4.5h9.4A3 3 0 0019.3 17L14 8.2V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M7.5 14h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      }
+                      @case ('attente') {
+                        <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2" />
+                        <path d="M12 7.5v4.8l3 1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      }
+                      @case ('cloture') { <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /> }
+                    }
+                  </svg>
+                  {{ a.libelle }}
+                </button>
+              }
+              }
+              @if (!auth.estDev()) {
+                <button type="button" class="etat-btn annuler" (click)="demanderAnnulation()" [disabled]="!!actionEnCours()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2" />
+                    <path d="M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                  Annuler le ticket
+                </button>
+              }
+            </div>
+            @if (etatChoisi() === 'Test interne') {
+              <p class="hint">Tous les collaborateurs {{ t.produit }} seront notifiés pour tester votre développement.</p>
+            }
+            @if (etatChoisi() === 'En attente de validation') {
+              <p class="hint">Le client sera invité à valider la solution (clôture) ou à annuler le ticket.</p>
+            }
+
+            <!-- Message au client -->
+            <div class="field">
+              <label class="label" for="commentaire">
+                @if (estUnRejetDeTest()) {
+                  Message au développeur <span class="obligatoire">(expliquez pourquoi le test n'est pas concluant)</span>
+                } @else if (etatChoisi() === 'Clôturé') {
+                  Message au client <span class="obligatoire">(justification obligatoire pour clôturer)</span>
+                } @else {
+                  Message <span class="optionnel">(optionnel)</span>
+                }
+              </label>
+              <textarea id="commentaire" class="textarea textarea-court" [ngModel]="commentaire()"
+                        (ngModelChange)="commentaire.set($event)"
+                        [class.is-invalid]="commentaireTropLong() || justificationManquante()"
+                        [placeholder]="etatChoisi() === 'Clôturé'
+                          ? 'Ex : Correctif livré et vérifié avec vous ce matin.'
+                          : 'Ex : Correctif en cours de test, livraison prévue demain.'"></textarea>
+              <div class="commentaire-bas">
+                @if (commentaireTropLong()) {
+                  <p class="error" role="alert">{{ longueurMax }} caractères maximum.</p>
+                } @else if (justificationManquante()) {
+                  <p class="error" role="alert">
+                    {{ estUnRejetDeTest() ? 'Expliquez au développeur ce qui ne va pas.' : 'Expliquez au client pourquoi le ticket est clôturé.' }}
+                  </p>
+                } @else {
+                  <p class="hint">Tout part ensemble à la validation : le client ne reçoit qu'une seule notification.</p>
+                }
+                <span class="compteur-car" [class.depasse]="commentaireTropLong()">{{ commentaire().length }}/{{ longueurMax }}</span>
+              </div>
+            </div>
+
+            <!-- Capture d'ecran jointe a la decision de test -->
+            @if (captureProposee()) {
+              <div class="field">
+                <span class="label">
+                  Capture d'écran
+                  <span class="optionnel">
+                    {{ estUnRejetDeTest() ? '(montrez au développeur ce qui ne va pas)' : '(preuve du test, transmise au client)' }}
+                  </span>
+                </span>
+                @if (capture(); as f) {
+                  <div class="capture-choisie">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" />
+                      <circle cx="9" cy="10" r="1.8" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M4.5 17.5l4.6-4.4 3.4 3.2 3-2.8 4 3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="capture-nom">{{ f.name }}</span>
+                    <span class="capture-taille">{{ tailleFichier(f.size) }}</span>
+                    <button type="button" class="capture-retirer" (click)="retirerCapture()" aria-label="Retirer la capture">✕</button>
+                  </div>
+                } @else {
+                  <label class="capture-zone" for="capture">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M20 11.5l-7.8 7.8a5 5 0 01-7-7L13 4.5a3.3 3.3 0 014.7 4.7L10 16.9a1.7 1.7 0 01-2.4-2.4l7.1-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    Joindre une capture… <small>10 Mo max</small>
+                  </label>
+                  <input id="capture" type="file" class="sr-only" (change)="surCapture($event)" />
+                }
+                @if (erreurCapture()) {
+                  <p class="error" role="alert">{{ erreurCapture() }}</p>
+                }
+              </div>
+            }
+
+            <!-- Envoi unique -->
+            <div class="validation-pied">
+              @if (recap()) {
+                <p class="recap">Sera envoyé : <strong>{{ recap() }}</strong></p>
+              } @else {
+                <p class="hint">Choisissez une action, un responsable ou écrivez un message.</p>
+              }
+              <button type="button" class="btn btn-primary" (click)="valider()"
+                      [disabled]="rienAEnvoyer() || justificationManquante() || commentaireTropLong() || !!actionEnCours()">
+                @if (actionEnCours() === 'valider') { <span class="spinner" aria-hidden="true"></span> }
+                @if (etatChoisi() === 'Test interne') { Valider — notifier l'équipe }
+                @else if (estUnRejetDeTest()) { Valider — renvoyer au développeur }
+                @else { Valider — notifier le client }
+              </button>
+            </div>
+          }
+        </section>
+      }
+
+      <!-- ============ Décision du client (ticket en attente de validation) ============ -->
+      @if (validationAttendueDuClient()) {
+        <section class="card bloc validation-client" aria-labelledby="titre-validation">
+          <h2 class="bloc-titre" id="titre-validation">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2" />
+              <path d="M12 7.5v4.8l3 1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            Votre validation est attendue
+          </h2>
+          <p class="texte">
+            Notre équipe a terminé le traitement de votre demande. Si la solution vous convient,
+            validez pour clôturer le ticket. Sinon, vous pouvez l'annuler.
+          </p>
+          <div class="field">
+            <label class="label" for="commentaire-client">Remarque <span class="optionnel">(optionnel)</span></label>
+            <textarea id="commentaire-client" class="textarea textarea-court" [ngModel]="commentaire()"
+                      (ngModelChange)="commentaire.set($event)" [class.is-invalid]="commentaireTropLong()"
+                      placeholder="Ex : Tout fonctionne, merci pour votre réactivité."></textarea>
+            @if (commentaireTropLong()) {
+              <p class="error" role="alert">{{ longueurMax }} caractères maximum.</p>
+            }
+          </div>
+          <div class="validation-client-actions">
+            <button type="button" class="btn btn-primary" (click)="validerSolution()"
+                    [disabled]="!!actionEnCours() || commentaireTropLong()">
+              @if (actionEnCours() === 'client:valider') { <span class="spinner" aria-hidden="true"></span> }
+              Valider la solution
+            </button>
+            <button type="button" class="btn btn-ghost danger-txt" (click)="demanderAnnulation()"
+                    [disabled]="!!actionEnCours()">
+              Annuler le ticket
+            </button>
+          </div>
+        </section>
+      }
+
+      <!-- ============ Description ============ -->
+      <section class="card bloc">
+        <h2 class="bloc-titre">Description</h2>
+        @if (t.description) {
+          <p class="texte">{{ t.description }}</p>
+        } @else {
+          <p class="vide">Aucune description fournie.</p>
+        }
+      </section>
+
+      <!-- ============ Pièce jointe ============ -->
+      @if (t.fichierNom) {
+        <section class="card bloc">
+          <h2 class="bloc-titre">Pièce jointe</h2>
+          <div class="fichier-ligne">
+            <span class="fichier-pastille" [class.image]="t.fichierType?.startsWith('image/')" aria-hidden="true">
+              @if (t.fichierType?.startsWith('image/')) {
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" />
+                  <circle cx="9" cy="10" r="1.8" stroke="currentColor" stroke-width="1.6" />
+                  <path d="M4.5 17.5l4.6-4.4 3.4 3.2 3-2.8 4 3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              } @else {
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M13.5 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8.5L13.5 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                  <path d="M13.5 3v5.5H19" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                </svg>
+              }
+            </span>
+            <div class="fichier-detail">
+              <strong class="casse">{{ t.fichierNom }}</strong>
+              <small>{{ tailleFichier(t.fichierTaille) }}</small>
+            </div>
+            <div class="fichier-boutons">
+              <button type="button" class="btn btn-sm btn-ghost" (click)="voirFichier()" [disabled]="actionEnCours() === 'fichier'">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" />
+                </svg>
+                {{ apercuFichier() ? 'Masquer' : 'Voir' }}
+              </button>
+              <button type="button" class="btn btn-sm btn-primary" (click)="telechargerFichier()" [disabled]="actionEnCours() === 'fichier'">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M4.5 19.5h15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Télécharger
+              </button>
+            </div>
+          </div>
+          @if (apercuFichier(); as src) {
+            <img class="fichier-apercu" [src]="src" alt="Aperçu de la pièce jointe {{ t.fichierNom }}" />
+          }
+        </section>
+      }
+
+      <!-- ============ Suivi du ticket ============ -->
+      <section class="card bloc">
+        <h2 class="bloc-titre">Suivi du ticket</h2>
+        @if (suivi().length === 0) {
+          <p class="vide">Aucune évolution pour le moment.</p>
+        } @else {
+          <ol class="suivi">
+            @for (e of suivi(); track e.id) {
+              <li class="suivi-item" [attr.data-type]="e.typeEvent">
+                <span class="suivi-point" aria-hidden="true"></span>
+                <div class="suivi-contenu">
+                  <div class="suivi-ligne">
+                    <span class="suivi-libelle">{{ libelleSuivi(e) }}</span>
+                    @if (['ETAT', 'CREATION', 'ASSIGNATION_ETAT', 'VALIDATION_CLIENT', 'ANNULATION_CLIENT'].includes(e.typeEvent)) {
+                      <span [class]="classeEtat(e.etat)">{{ e.etat }}</span>
+                    }
+                  </div>
+                  @if (e.commentaire) {
+                    <blockquote class="suivi-message avec-icone">
+                      <img src="assets/icons/message.png" alt="" class="suivi-message-icone" aria-hidden="true" />
+                      <span class="suivi-message-texte">{{ e.commentaire }}</span>
+                    </blockquote>
+                  }
+                  @if (e.fichierNom) {
+                    <button type="button" class="suivi-capture-btn" (click)="voirCaptureSuivi(e)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" />
+                        <circle cx="9" cy="10" r="1.8" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M4.5 17.5l4.6-4.4 3.4 3.2 3-2.8 4 3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      {{ captureSuiviOuverte()?.id === e.id ? 'Masquer la capture' : 'Voir la capture' }}
+                      <span class="suivi-capture-nom">{{ e.fichierNom }}</span>
+                    </button>
+                    @if (captureSuiviOuverte(); as ouverte) {
+                      @if (ouverte.id === e.id) {
+                        <img class="suivi-capture-img" [src]="ouverte.url" alt="Capture jointe : {{ e.fichierNom }}" />
+                      }
+                    }
+                  }
+                  <time class="suivi-date" [attr.datetime]="e.dateEvent"
+                        [title]="e.dateEvent | date:'dd/MM/yyyy à HH:mm'">
+                    {{ tempsRelatif(e.dateEvent) }} · {{ e.dateEvent | date:'dd/MM/yyyy HH:mm' }}
+                  </time>
+                </div>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+    </div>
+
+    <!-- ============ Colonne laterale ============ -->
+    <div class="stack">
+      <aside class="card bloc">
+        <h2 class="bloc-titre">Informations</h2>
+        <dl class="infos">
+          <div><dt>Produit</dt><dd>{{ t.produit || '—' }}</dd></div>
+          <div><dt>Version</dt><dd>{{ t.version || '—' }}</dd></div>
+          <div><dt>Module</dt><dd>{{ t.module || '—' }}</dd></div>
+          <div><dt>Type</dt><dd>{{ t.typeTicket || '—' }}</dd></div>
+          <div class="sep"></div>
+          <div><dt>Client</dt><dd>{{ t.client || '—' }}</dd></div>
+          <div><dt>Email</dt><dd class="casse">{{ t.email || '—' }}</dd></div>
+          <div><dt>Responsable</dt><dd class="casse">{{ nomResponsable() || 'Non assigné' }}</dd></div>
+          <div class="sep"></div>
+          <div><dt>Demande</dt><dd>{{ t.dateDemande ? (t.dateDemande | date:'dd/MM/yyyy') : '—' }}</dd></div>
+          <div><dt>Échéance</dt><dd>{{ t.dateEstimee ? (t.dateEstimee | date:'dd/MM/yyyy') : '—' }}</dd></div>
+          @if (t.dateEnattente) {
+            <div><dt>En attente depuis</dt><dd>{{ t.dateEnattente | date:'dd/MM/yyyy' }}</dd></div>
+          }
+        </dl>
+      </aside>
+
+      @if (peutTraiter()) {
+        <section class="card bloc">
+          <h2 class="bloc-titre">Note interne</h2>
+          <label class="sr-only" for="resolution">Note interne sur la résolution</label>
+          <textarea id="resolution" class="textarea" [ngModel]="resolution()" (ngModelChange)="resolution.set($event)"
+                    placeholder="Diagnostic, correctif appliqué… (non visible par le client)"></textarea>
+          <button type="button" class="btn btn-sm btn-ghost" (click)="enregistrerResolution()"
+                  [disabled]="resolution() === (t.resolution ?? '') || !!actionEnCours()">
+            @if (actionEnCours() === 'resolution') { <span class="spinner spinner-fonce" aria-hidden="true"></span> }
+            Enregistrer la note
+          </button>
+        </section>
+      }
+    </div>
+  </div>
+
+  <!-- ============ Confirmation d'annulation ============ -->
+  @if (confirmationAnnulation()) {
+    <div class="voile-modal" (click)="confirmationAnnulation.set(false)" aria-hidden="true"></div>
+    <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="titre-annulation">
+      <div class="modal-icone" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2" />
+          <path d="M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </div>
+      <h2 id="titre-annulation">Annuler le ticket #{{ t.id }} ?</h2>
+      <p class="modal-texte">
+        @if (auth.estClient()) {
+          Le ticket ne pourra plus évoluer et notre équipe sera prévenue de l'annulation.
+        } @else {
+          Le ticket ne pourra plus évoluer et le client sera notifié de l'annulation.
+        }
+      </p>
+      @if (commentaire().trim()) {
+        <blockquote class="suivi-message">{{ commentaire() }}</blockquote>
+        <p class="hint">Ce message sera transmis avec l'annulation.</p>
+      } @else if (!auth.estClient()) {
+        <p class="astuce">Conseil : expliquez le motif au client dans « Message au client » avant d'annuler.</p>
+      }
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" (click)="confirmationAnnulation.set(false)" autofocus>Retour</button>
+        <button type="button" class="btn btn-danger" (click)="confirmerAnnulation()">Annuler le ticket</button>
+      </div>
+    </div>
+  }
+  @if (edition()) {
+    <hd-ticket-edition-dialog [ticket]="t" (enregistre)="surTicketCorrige($event)" (ferme)="edition.set(false)" />
+  }
+  }
+}
