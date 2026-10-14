@@ -14,9 +14,16 @@ export interface User {
   enabled: boolean | null;
   clientTiers: string | null;
   societeNom: string | null;
+  /** ROLE_CLIENT : toutes les sociétés rattachées (la 1re = principale). */
+  societes?: SocieteClient[];
+  /** ROLE_CLIENT : administrateur de sa société (voit les tickets de tous les membres). */
+  adminSociete?: boolean;
   nombreConnexion: number;
   dateCreation: string | null;
   produits: Produit[];
+  perimetre?: PerimetreLigne[];
+  /** ROLE_CLIENT : modules autorisés (au niveau du client). Vide = tous. */
+  modules?: string[];
 }
 
 export interface UserPage {
@@ -33,6 +40,24 @@ export interface Collaborateur {
   role: Role | null;
 }
 
+/** Une ligne du périmètre d'un client : un produit (+ version). Les modules sont au niveau du client. */
+export interface PerimetreLigne {
+  produit: string;
+  version?: string | null;
+}
+
+/** Module géré par l'admin. */
+export interface ModuleItem {
+  id: number;
+  nom: string;
+}
+
+/** Périmètre d'un client, pour restreindre les listes à la création d'un ticket. Listes vides = tout. */
+export interface PerimetreClientReponse {
+  produits: string[];
+  modules: string[];
+}
+
 export interface CreateUserRequest {
   role: Role;
   email: string;
@@ -40,17 +65,33 @@ export interface CreateUserRequest {
   nom: string;
   prenom: string;
   clientTiers?: string | null;
+  /** ROLE_CLIENT : codes tiers de toutes les sociétés rattachées (la 1re = principale). */
+  societesTiers?: string[];
+  /** ROLE_CLIENT : administrateur de sa société (voit les tickets de tous les membres). */
+  adminSociete?: boolean;
   produitIds: number[];
+  perimetre?: PerimetreLigne[];
+  /** ROLE_CLIENT : modules autorisés (au niveau du client). */
+  modules?: string[];
 }
 
 export interface UpdateUserRequest {
+  /** Nouveau rôle (vide = inchangé). */
+  role?: Role;
   email: string;
   nom: string;
   prenom: string;
   enabled: boolean;
   password?: string | null;
   clientTiers?: string | null;
+  /** ROLE_CLIENT : codes tiers de toutes les sociétés rattachées (la 1re = principale). */
+  societesTiers?: string[];
+  /** ROLE_CLIENT : administrateur de sa société (voit les tickets de tous les membres). */
+  adminSociete?: boolean;
   produitIds: number[];
+  perimetre?: PerimetreLigne[];
+  /** ROLE_CLIENT : modules autorisés (au niveau du client). */
+  modules?: string[];
 }
 
 export const LIBELLES_ROLE: Record<Role, string> = {
@@ -119,6 +160,14 @@ export interface CreateTicketRequest {
   importance: string;
   clientTiers?: string | null;
   contactEmail?: string | null;
+  /** Client multi-sociétés : société pour laquelle il crée le ticket. */
+  societe?: string | null;
+  /** Création depuis la boîte mail : signature de l'e-mail d'origine (lien partagé anti-doublon). */
+  emailMessageId?: string | null;
+  emailThreadId?: string | null;
+  emailExpediteur?: string | null;
+  emailObjet?: string | null;
+  emailDate?: string | null;
   dateEstimee?: string | null;
 }
 
@@ -251,12 +300,55 @@ export function tempsRelatif(dateIso: string): string {
   return new Date(dateIso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+/** Ticket récent similaire, signalé avant une création manuelle (anti-doublon). */
+export interface DoublonTicket {
+  id: number;
+  intitule: string | null;
+  produit: string | null;
+  etat: string | null;
+  date: string | null;
+}
+
 export interface TicketFilters {
   etat?: string;
   produit?: string;
   search?: string;
+  /** Admin : nom et/ou prénom d'un membre de l'équipe → tickets traités par lui. */
+  membre?: string;
+  /** Tickets demandés à partir de ce jour inclus (yyyy-MM-dd). */
+  depuis?: string;
+  /** Client administrateur de sa société : e-mail d'un membre de son équipe, ou « * » pour toute la société. */
+  equipe?: string;
   page: number;
   pageSize: number;
+}
+
+/** Membre de l'équipe d'un client administrateur de sa société (contact Divalto). */
+export interface Equipier {
+  email: string;
+  nom: string;
+}
+
+/** Export (PDF ou Excel) : les tickets cochés (ids) ou, à défaut, tous ceux qui correspondent aux filtres. */
+export interface ExportTickets {
+  /** pdf = rapport avec logo et synthèse ; excel = tableau de données seul. */
+  format: 'pdf' | 'excel';
+  ids?: number[];
+  etat?: string;
+  produit?: string;
+  search?: string;
+  membre?: string;
+  /** yyyy-MM-dd */
+  depuis?: string;
+}
+
+/** Membre de l'équipe (admin, collaborateur, développeur) : suggestions du filtre « traités par ». */
+export interface MembreEquipe {
+  id: number;
+  /** Prénom + nom (ou identifiant s'ils sont vides). */
+  nom: string;
+  username: string | null;
+  role: string | null;
 }
 
 // --- Valeurs metier (alignees sur l'application en production) ---

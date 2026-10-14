@@ -9,6 +9,12 @@ export const routes: Routes = [
       import('./features/auth/login.component').then(m => m.LoginComponent)
   },
   {
+    path: 'oauth/callback',
+    title: 'Connexion Microsoft — Help Desk Mediasoft',
+    loadComponent: () =>
+      import('./features/emails/oauth-callback.component').then(m => m.OAuthCallbackComponent)
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -20,6 +26,12 @@ export const routes: Routes = [
         title: 'Tickets — Help Desk Mediasoft',
         loadComponent: () =>
           import('./features/tickets/ticket-list.component').then(m => m.TicketListComponent)
+      },
+      {
+        path: 'emails',
+        title: 'Boîte mail — Help Desk Mediasoft',
+        loadComponent: () =>
+          import('./features/emails/email-inbox.component').then(m => m.EmailInboxComponent)
       },
       {
         path: 'tickets/nouveau',

@@ -1,0 +1,217 @@
+/* Creation d'un ticket depuis un e-mail — chrome du panneau : _email-slider.scss */
+
+.tk-slider { --bx-largeur: min(1060px, calc(100vw - 120px)); }
+
+.tk-cols { display: flex; height: 100%; min-height: 0; }
+
+/* ============ Colonne formulaire ============ */
+.tk-gauche {
+  flex: 0 0 54%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tk-defil {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 24px 22px 28px;
+}
+
+.tk-tete { display: flex; align-items: baseline; gap: 8px; }
+.tk-prefixe { flex-shrink: 0; font-size: 22px; color: var(--bx-texte); }
+.tk-titre {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 0;
+  border: none;
+  border-bottom: 1px dashed transparent;
+  background: transparent;
+  font: 22px/1.3 var(--bx-police);
+  color: var(--bx-texte);
+  transition: border-color 150ms;
+}
+.tk-titre:hover { border-bottom-color: #c3cad0; }
+.tk-titre:focus { outline: none; border-bottom-color: var(--bx-accent); }
+.tk-titre.invalide { border-bottom-color: var(--bx-rouge); }
+
+/* Description */
+.tk-desc { padding: 14px 18px 10px; border: 1px solid transparent; }
+.tk-desc.invalide { border-color: var(--bx-rouge); }
+.tk-desc-texte {
+  width: 100%;
+  min-height: 140px;
+  padding: 0;
+  border: none;
+  resize: vertical;
+  font: 13.5px/1.6 var(--bx-police);
+  color: var(--bx-texte);
+}
+.tk-desc-texte:focus { outline: none; }
+.tk-outils {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 18px;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--bx-ligne);
+}
+.tk-outil {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  border: none;
+  background: none;
+  font: 12.5px var(--bx-police);
+  color: var(--bx-gris);
+  cursor: pointer;
+  transition: color 150ms;
+}
+.tk-outil:hover { color: var(--bx-accent); }
+.tk-fichier {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 4px 3px 10px;
+  border-radius: 12px;
+  background: #eef6ff;
+  font-size: 12px;
+  color: var(--bx-lien);
+}
+.tk-fichier small { color: var(--bx-gris); }
+.tk-fichier button { border: none; background: none; color: var(--bx-gris); cursor: pointer; }
+
+/* Lignes libelle / valeur */
+.tk-champs { padding: 6px 18px; }
+.tk-ligne {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 8px 0;
+}
+.tk-ligne > label,
+.tk-lbl { padding-top: 8px; font-size: 13px; color: var(--bx-gris); }
+.req { color: var(--bx-rouge); }
+.tk-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tk-date { width: 190px; max-width: 100%; }
+
+.tk-choix { display: flex; flex-wrap: wrap; gap: 6px; }
+.tk-choix button {
+  height: 30px;
+  padding: 0 13px;
+  border: 1px solid var(--bx-ligne-2);
+  border-radius: 15px;
+  background: #fff;
+  font: 12.5px var(--bx-police);
+  color: var(--bx-texte-2);
+  cursor: pointer;
+  transition: all 150ms;
+}
+.tk-choix button:hover { border-color: #b9c2c9; color: var(--bx-texte); }
+.tk-choix button.actif { border-color: #9cc7f3; background: #e8f3fe; color: var(--bx-lien); font-weight: 600; }
+.tk-choix button.actif[data-niveau='Grave'] { border-color: #f5c77a; background: #fff5e2; color: #a15c00; }
+.tk-choix button.actif[data-niveau='Bloquante'] { border-color: #f3a3a5; background: #ffeced; color: #c0282d; }
+.tk-choix.invalide button { border-color: #e98f92; }
+
+.tk-origine .tk-ligne { align-items: center; padding: 6px 0; }
+.tk-origine .tk-lbl { padding-top: 0; }
+.tk-info { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; overflow-wrap: anywhere; }
+.tk-info.lien { color: var(--bx-lien); }
+.tk-info svg { flex-shrink: 0; color: var(--bx-accent); }
+
+.tk-aide { margin: 5px 0 0; font-size: 12px; color: var(--bx-gris); }
+.tk-aide.ok { color: #13a05e; }
+.tk-aide.attention { color: #a15c00; }
+.tk-lien {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--bx-lien);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.tk-err { margin: 5px 0 0; font-size: 12px; color: var(--bx-rouge); }
+.tk-err-titre { margin-top: -8px; }
+
+/* Pied colle en bas : Creer / Annuler */
+.tk-pied {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  background: #fff;
+  box-shadow: 0 -2px 12px rgba(15, 30, 45, .07);
+}
+.tk-creer { min-width: 96px; height: 36px; }
+.tk-pied small { margin-left: auto; font-size: 12px; color: var(--bx-gris-clair); }
+.tk-err-pied { margin: 0 0 0 auto; text-align: right; }
+
+/* Champ Client (composant partage) aligne sur les champs compacts */
+:host ::ng-deep hd-societe-autocomplete {
+  .input {
+    min-height: 34px;
+    height: 34px;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 32px;
+    border-color: var(--bx-ligne-2);
+    border-radius: 6px;
+    box-shadow: none;
+    font: 13px var(--bx-police);
+  }
+  .input.choisi { color: var(--bx-lien); font-weight: 600; }
+  .ico { left: 10px; width: 15px; height: 15px; }
+  .effacer { width: 28px; height: 28px; }
+}
+
+/* ============ Colonne e-mail d'origine ============ */
+.tk-droite {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #e1e6ea;
+  background: linear-gradient(160deg, #e8f3fb 0%, #f1f6f1 55%, #eaf2f8 100%);
+}
+.tk-droite-tete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(15, 30, 45, .06);
+  background: rgba(255, 255, 255, .6);
+}
+.tk-droite-tete strong { display: block; font-size: 14px; font-weight: 600; }
+.tk-droite-tete small { display: block; font-size: 12px; color: var(--bx-gris); }
+.tk-droite-corps { flex: 1; min-height: 0; overflow-y: auto; padding: 20px; }
+.tk-droite-carte {
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 30, 45, .06);
+}
+
+@media (max-width: 1000px) {
+  .tk-slider { --bx-largeur: min(720px, calc(100vw - 80px)); }
+  .tk-droite { display: none; }
+  .tk-gauche { flex: 1; }
+}
+@media (max-width: 760px) {
+  .tk-defil { padding: 16px 12px; }
+  .tk-tete { padding-right: 50px; }
+  .tk-prefixe, .tk-titre { font-size: 18px; }
+  .tk-ligne { grid-template-columns: 1fr; gap: 4px; }
+  .tk-ligne > label, .tk-lbl { padding-top: 0; }
+  .tk-pied { padding: 10px 12px; }
+  .tk-pied small { display: none; }
+}

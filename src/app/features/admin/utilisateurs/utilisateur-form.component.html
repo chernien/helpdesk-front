@@ -9,7 +9,7 @@
     <h1>{{ modeEdition() ? 'Modifier le compte' : 'Nouvel utilisateur' }}</h1>
     <p class="sous-titre">
       @if (modeEdition() && role()) {
-        {{ libellesRole[role()!] }} — le rôle d'un compte n'est pas modifiable.
+        {{ libellesRole[role()!] }} — vous pouvez changer le type de compte ci-dessous.
       } @else {
         Choisissez d'abord le type de compte.
       }
@@ -24,9 +24,8 @@
   </div>
 } @else {
 
-  <!-- ============ Etape 1 : type de compte (creation) ============ -->
-  @if (!modeEdition()) {
-    <section class="roles" role="radiogroup" aria-label="Type de compte">
+  <!-- ============ Type de compte (modifiable aussi en édition) ============ -->
+  <section class="roles" role="radiogroup" aria-label="Type de compte">
       @for (choix of choixRoles; track choix.role) {
         <button type="button" class="carte-role" role="radio"
                 [attr.aria-label]="choix.titre + ' : ' + choix.description"
@@ -73,7 +72,6 @@
         </button>
       }
     </section>
-  }
 
   @if (role()) {
     @if (erreur()) {
@@ -88,32 +86,116 @@
           <h2 class="bloc-titre">Société cliente</h2>
           <div class="grid-2">
             <div class="field">
-              <label class="label" for="societe">Société <span class="req">*</span></label>
+              <label class="label" for="societe">Sociétés <span class="req">*</span></label>
               <hd-societe-autocomplete inputId="societe" [invalide]="societeInvalide()"
-                                       [valeurInitiale]="societe()" (choisie)="surSociete($event)" />
+                                       (choisie)="surSociete($event)" />
               @if (societeInvalide()) {
-                <p class="error" role="alert">La société est requise : tapez son nom puis choisissez-la.</p>
+                <p class="error" role="alert">Au moins une société est requise : tapez son nom puis choisissez-la.</p>
               } @else {
-                <p class="hint">Sociétés Divalto (table CLI).</p>
+                <p class="hint">Tapez un nom et choisissez-le pour l'ajouter ci-dessous ; recommencez pour rattacher plusieurs sociétés.</p>
+              }
+
+              @if (societes().length) {
+                <div class="societes-choisies">
+                  @for (s of societes(); track s.tiers) {
+                    <span class="societe-chip">
+                      {{ s.nom }}
+                      @if ($index === 0) { <em class="principale">principale</em> }
+                      <button type="button" (click)="retirerSociete(s.tiers)" title="Retirer" aria-label="Retirer">×</button>
+                    </span>
+                  }
+                </div>
               }
             </div>
 
             <div class="field">
               <label class="label" for="contact">Contact Divalto</label>
               <select id="contact" class="select" (change)="surContact($any($event.target).value)"
-                      [attr.disabled]="!societe() || chargementContacts() || contacts().length === 0 ? true : null">
+                      [attr.disabled]="!societeContact() || chargementContacts() || contactsAffiches().length === 0 ? true : null">
                 <option value="">
-                  @if (!societe()) { Choisissez d'abord une société }
+                  @if (!societeContact()) { Choisissez d'abord une société }
                   @else if (chargementContacts()) { Chargement des contacts… }
-                  @else if (contacts().length === 0) { Aucun contact avec email }
+                  @else if (contactsAffiches().length === 0) { Aucun contact avec email }
                   @else { — Pré-remplir depuis un contact — }
                 </option>
-                @for (c of contacts(); track c.email) {
+                @for (c of contactsAffiches(); track c.email) {
                   <option [value]="c.email">{{ libelleContact(c) }}</option>
                 }
               </select>
-              <p class="hint">Optionnel : remplit le nom, le prénom et l'email, qui restent modifiables.</p>
+              <p class="hint">Optionnel ({{ societeContact()?.nom || 'dernière société ajoutée' }}) : remplit le nom, le prénom et l'email, qui restent modifiables.</p>
             </div>
+          </div>
+
+          <!-- Administrateur de la société : voit les tickets de tous les membres (pré-coché depuis Divalto) -->
+          <div class="admin-societe">
+            <label class="admin-coche">
+              <input type="checkbox" [checked]="adminSociete()" (change)="adminSociete.set(!adminSociete())" />
+              <span>Administrateur de la société</span>
+            </label>
+            <p class="hint">
+              Coché : il voit ses tickets et peut choisir un membre de son équipe pour voir les siens.
+              Sinon, il ne voit que ses propres tickets.
+              @if (adminDivalto()) { <strong class="divalto">« Profil Admin helpdesk » est coché dans Divalto.</strong> }
+            </p>
+          </div>
+        </section>
+
+        <!-- ============ Client : produits affectés ============ -->
+        <section class="card bloc">
+          <h2 class="bloc-titre">Produits affectés à ce client</h2>
+          <p class="hint">Plusieurs possibles — aucun coché = tous les produits.</p>
+
+          <div class="modules-choix">
+            @for (p of produits(); track p.productId) {
+              <span class="pill-suppr-wrap" [class.actif]="produitClientCoche(p.nom)">
+                <label class="module-opt sans-bord">
+                  <input type="checkbox" [checked]="produitClientCoche(p.nom)" (change)="basculerProduitClient(p.nom)" />
+                  {{ p.nom }}
+                </label>
+                <button type="button" class="pill-suppr" (click)="supprimerProduit(p)" title="Supprimer ce produit du catalogue" aria-label="Supprimer">×</button>
+              </span>
+            }
+
+            @if (ajoutProduitOuvert()) {
+              <span class="module-ajout-inline">
+                <input class="input-inline" type="text" placeholder="Nouveau produit" autofocus
+                       [value]="nouveauProduit()" (input)="nouveauProduit.set($any($event.target).value)"
+                       (keydown.enter)="$event.preventDefault(); ajouterProduit()"
+                       (keydown.escape)="fermerAjoutProduit()" />
+                <button type="button" class="btn-inline ok" (click)="ajouterProduit()" title="Ajouter" aria-label="Ajouter">✓</button>
+                <button type="button" class="btn-inline" (click)="fermerAjoutProduit()" title="Annuler" aria-label="Annuler">×</button>
+              </span>
+            } @else {
+              <button type="button" class="module-plus" (click)="ajoutProduitOuvert.set(true)" title="Ajouter un produit" aria-label="Ajouter un produit">+</button>
+            }
+          </div>
+        </section>
+
+        <!-- ============ Client : modules affectés ============ -->
+        <section class="card bloc">
+          <h2 class="bloc-titre">Modules affectés à ce client</h2>
+          <p class="hint">Plusieurs possibles — aucun coché = tous les modules.</p>
+
+          <div class="modules-choix">
+            @for (m of modules(); track m.id) {
+              <label class="module-opt" [class.actif]="moduleClientCoche(m.nom)">
+                <input type="checkbox" [checked]="moduleClientCoche(m.nom)" (change)="basculerModuleClient(m.nom)" />
+                {{ m.nom }}
+              </label>
+            }
+
+            @if (ajoutModuleOuvert()) {
+              <span class="module-ajout-inline">
+                <input class="input-inline" type="text" placeholder="Nouveau module" autofocus
+                       [value]="nouveauModule()" (input)="nouveauModule.set($any($event.target).value)"
+                       (keydown.enter)="$event.preventDefault(); ajouterModule()"
+                       (keydown.escape)="fermerAjoutModule()" />
+                <button type="button" class="btn-inline ok" (click)="ajouterModule()" title="Ajouter" aria-label="Ajouter">✓</button>
+                <button type="button" class="btn-inline" (click)="fermerAjoutModule()" title="Annuler" aria-label="Annuler">×</button>
+              </span>
+            } @else {
+              <button type="button" class="module-plus" (click)="ajoutModuleOuvert.set(true)" title="Ajouter un module" aria-label="Ajouter un module">+</button>
+            }
           </div>
         </section>
       }

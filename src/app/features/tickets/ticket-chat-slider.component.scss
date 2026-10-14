@@ -1,0 +1,366 @@
+/* Discussion (chat) — chrome du panneau : _email-slider.scss (bx-*) */
+
+/* Fenêtre flottante façon Messenger : ancrée en bas à droite, hauteur limitée, coins arrondis. */
+.ch-slider {
+  --bx-largeur: min(390px, calc(100vw - 24px));
+  top: auto;
+  bottom: 16px;
+  right: 16px;
+  height: min(560px, calc(100dvh - 92px));
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 16px 50px rgba(8, 20, 30, .34);
+  animation: chPopup 260ms cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes chPopup { from { opacity: 0; transform: translateY(18px) scale(.98); } }
+
+/* Voile discret : le ticket reste visible derrière, et le clic dehors ferme la fenêtre. */
+.ch-voile { background: rgba(20, 31, 40, .14); animation: bxFondu 200ms ease-out both; }
+
+.ch-tete { align-items: center; gap: 10px; padding: 12px 12px 12px 16px; }
+.ch-tete .bx-titre { font-size: 15px; font-weight: 600; }
+.ch-titre-bloc { flex: 1; min-width: 0; }
+.ch-fermer {
+  flex-shrink: 0;
+  width: 30px; height: 30px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(15, 30, 45, .06);
+  color: var(--bx-gris);
+  cursor: pointer;
+  transition: background 150ms, color 150ms;
+}
+.ch-fermer:hover { background: rgba(229, 72, 77, .12); color: var(--bx-rouge); }
+.ch-ico {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(140deg, #2b9df4, #1668c7);
+  color: #fff;
+}
+.ch-ico svg { width: 17px; height: 17px; }
+.ch-titre-bloc { min-width: 0; }
+.ch-sous {
+  display: block;
+  font-size: 12.5px;
+  color: var(--bx-gris);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Fil des messages ── */
+.ch-fil {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(31, 126, 232, .05) 1px, transparent 0) 0 0 / 22px 22px,
+    linear-gradient(180deg, #eef4fa 0%, #f3f6f9 100%);
+}
+
+/* Pousse les messages vers le bas (façon Messenger) quand ils sont peu nombreux ;
+   se réduit à 0 dès que le fil dépasse la hauteur, pour que le défilement reste correct. */
+.ch-pousse { flex: 1 1 auto; min-height: 0; }
+
+.ch-centre {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 10px;
+  text-align: center;
+  color: var(--bx-gris);
+}
+.ch-vide strong { font-size: 15px; color: var(--bx-texte-2); }
+.ch-vide span, .ch-erreur span { max-width: 300px; font-size: 13px; }
+.ch-erreur svg { color: #cdd6dc; }
+.ch-vide svg {
+  padding: 14px;
+  border-radius: 50%;
+  background: rgba(31, 126, 232, .08);
+  color: #6aa8ee;
+}
+
+.ch-jour {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 4px 0;
+}
+.ch-jour span {
+  padding: 3px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 1px 3px rgba(15, 30, 45, .1);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--bx-gris);
+  text-transform: capitalize;
+  backdrop-filter: blur(2px);
+}
+
+.ch-ligne {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  max-width: 90%;
+}
+.ch-ligne.moi { align-self: flex-end; flex-direction: row-reverse; }
+
+.ch-bulle-bloc { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+/* Bulle + bouton supprimer (apparaît au survol) */
+.ch-bulle-rangee { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.ch-ligne.moi .ch-bulle-rangee { flex-direction: row-reverse; }
+.ch-suppr {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--bx-gris-clair);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms, background 150ms, color 150ms;
+}
+.ch-ligne:hover .ch-suppr, .ch-suppr:focus-visible { opacity: 1; }
+.ch-suppr:hover { background: rgba(229, 72, 77, .12); color: var(--bx-rouge); }
+
+.ch-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 30, 45, .14);
+  font-size: 12px;
+  color: var(--bx-texte-2);
+}
+.ch-ligne.moi .ch-confirm { align-self: flex-end; }
+.ch-confirm .oui {
+  border: none;
+  border-radius: 6px;
+  padding: 3px 11px;
+  background: var(--bx-rouge);
+  color: #fff;
+  font: 600 12px var(--bx-police);
+  cursor: pointer;
+}
+.ch-confirm .oui:hover { background: #cf3b40; }
+.ch-confirm .non {
+  border: none;
+  background: none;
+  color: var(--bx-gris);
+  font: 12px var(--bx-police);
+  cursor: pointer;
+}
+.ch-confirm .non:hover { color: var(--bx-texte); }
+
+.ch-auteur {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bx-texte-2);
+}
+.ch-role {
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: #eef2f5;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--bx-gris);
+}
+.ch-role.client { background: #e7f5ec; color: #1b8a4f; }
+
+.ch-bulle {
+  position: relative;
+  min-width: 0;          /* autorise la bulle à se réduire (sinon un nom de fichier long déborde) */
+  max-width: 100%;
+  padding: 8px 12px 6px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 30, 45, .1);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--bx-texte);
+}
+.ch-bulle.client { background: #f1f7ff; }
+.ch-bulle.moi {
+  background: linear-gradient(135deg, #2b9df4, #1f7ee8);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(31, 126, 232, .35);
+}
+.ch-texte { white-space: pre-wrap; word-break: break-word; }
+.ch-heure {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  text-align: right;
+  color: var(--bx-gris-clair);
+}
+.ch-bulle.moi .ch-heure { color: rgba(255, 255, 255, .8); }
+.ch-bulle.en-cours { opacity: .68; }
+.ch-heure svg { vertical-align: -1px; opacity: .9; }
+
+/* Pièce jointe dans une bulle */
+.ch-pj {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px 9px;
+  border: 1px solid var(--bx-ligne-2);
+  border-radius: 10px;
+  background: #f4f7fa;
+  color: var(--bx-texte);
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms;
+}
+.ch-pj:hover:not(:disabled) { background: #eaf0f5; }
+.ch-pj:disabled { cursor: default; opacity: .7; }
+.ch-pj.pj-moi { background: rgba(255, 255, 255, .18); border-color: rgba(255, 255, 255, .3); color: #fff; }
+.ch-pj.pj-moi:hover:not(:disabled) { background: rgba(255, 255, 255, .26); }
+.ch-pj-ico { flex-shrink: 0; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; background: rgba(31, 126, 232, .12); color: var(--bx-accent); }
+.ch-pj.pj-moi .ch-pj-ico { background: rgba(255, 255, 255, .22); color: #fff; }
+.ch-pj-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.ch-pj-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 600; }
+.ch-pj-txt small { font-size: 11px; opacity: .75; }
+.ch-pj-dl { flex-shrink: 0; opacity: .7; }
+
+/* Pièce jointe sélectionnée (au-dessus du champ) */
+.ch-pj-selection {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+  padding: 6px 6px 6px 10px;
+  border-radius: 10px;
+  background: #eef6ff;
+  border: 1px solid #cfe4fb;
+  font-size: 12.5px;
+  color: var(--bx-lien);
+}
+.ch-pj-selection svg { flex-shrink: 0; color: var(--bx-accent); }
+.ch-pj-selection .ch-pj-nom { flex: 1; min-width: 0; }
+.ch-pj-selection small { color: var(--bx-gris); }
+.ch-pj-selection button { flex-shrink: 0; width: 22px; height: 22px; border: none; border-radius: 50%; background: rgba(15, 30, 45, .06); color: var(--bx-gris); cursor: pointer; }
+.ch-pj-selection button:hover { background: rgba(229, 72, 77, .14); color: var(--bx-rouge); }
+.ch-pj-err { margin: 0 0 7px; font-size: 12px; color: var(--bx-rouge); }
+
+/* Trombone dans la zone de saisie */
+.ch-trombone {
+  flex-shrink: 0;
+  width: 34px; height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--bx-gris);
+  cursor: pointer;
+  transition: background 150ms, color 150ms;
+}
+.ch-trombone:hover { background: rgba(15, 30, 45, .06); color: var(--bx-accent); }
+
+/* ── Zone de saisie ── */
+.ch-composer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px 9px;
+  background: #fff;
+  box-shadow: 0 -2px 14px rgba(15, 30, 45, .08);
+}
+.ch-saisie {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 5px 5px 5px 6px;
+  border: 1px solid var(--bx-ligne-2);
+  border-radius: 22px;
+  background: #f5f8fb;
+  transition: border-color 150ms, background 150ms, box-shadow 150ms;
+}
+.ch-saisie:focus-within { border-color: var(--bx-accent); background: #fff; box-shadow: 0 0 0 3px rgba(30, 127, 224, .12); }
+.ch-champ {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  min-height: 32px;
+  max-height: 132px;
+  padding: 6px 8px 6px 10px;
+  border: none;
+  background: none;
+  font: 13.5px/1.45 var(--bx-police);
+  color: var(--bx-texte);
+  resize: none;
+  overflow-y: auto;
+}
+.ch-champ:focus { outline: none; }
+.ch-champ::placeholder { color: var(--bx-gris-clair); }
+.ch-envoyer {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--bx-bleu);
+  color: #fff;
+  cursor: pointer;
+  transition: background 150ms, transform 150ms;
+}
+.ch-envoyer svg { margin-left: -1px; }
+.ch-envoyer:hover:not(:disabled) { background: var(--bx-bleu-2); transform: scale(1.06); }
+.ch-envoyer:disabled { background: #c2cfdb; cursor: default; }
+
+.ch-hint {
+  margin: 0;
+  padding-left: 6px;
+  font-size: 11px;
+  color: var(--bx-gris-clair);
+}
+.ch-hint kbd {
+  padding: 0 5px;
+  border: 1px solid var(--bx-ligne-2);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: #f7f9fb;
+  font: 600 10.5px var(--bx-police);
+  color: var(--bx-texte-2);
+}
+
+@media (max-width: 760px) {
+  /* Plein écran sur mobile, mais toujours en fenêtre (coins arrondis en haut). */
+  .ch-slider {
+    --bx-largeur: 100vw;
+    inset: auto 0 0 0;
+    height: 88dvh;
+    border-radius: 16px 16px 0 0;
+  }
+  .ch-fil { padding: 8px 12px 14px; }
+  .ch-ligne { max-width: 90%; }
+}

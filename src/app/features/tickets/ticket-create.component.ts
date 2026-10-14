@@ -10,7 +10,7 @@ import { ReferenceService } from '../../core/services/reference.service';
 import { TicketService } from '../../core/services/ticket.service';
 import { ToastService } from '../../core/services/toast.service';
 import {
-  ContactClient, IMPORTANCES, MODULES, Produit, SocieteClient, TYPES_TICKET,
+  ContactClient, DoublonTicket, IMPORTANCES, MODULES, Produit, SocieteClient, TYPES_TICKET,
   classeImportance, classeProduit, tailleFichier
 } from '../../core/models/models';
 import { SocieteAutocompleteComponent } from '../../shared/societe-autocomplete.component';
@@ -33,14 +33,34 @@ export class TicketCreateComponent {
 
   readonly importances = IMPORTANCES;
   readonly typesTicket = TYPES_TICKET;
-  readonly modules = MODULES;
 
   readonly produits = signal<Produit[]>([]);
+  /** Tous les modules gérés (fallback sur la liste figée si l'API ne répond pas). */
+  readonly modulesTous = signal<string[]>([...MODULES]);
+
+  /** Périmètre du client ciblé : produits / modules autorisés. Vide = aucune restriction. */
+  readonly perimetreProduits = signal<string[]>([]);
+  readonly perimetreModules = signal<string[]>([]);
+
+  /** Listes réellement proposées, restreintes au périmètre du client (ou toutes si aucun). */
+  readonly produitsAffiches = computed(() => {
+    const autorises = this.perimetreProduits();
+    return autorises.length ? this.produits().filter(p => autorises.includes(p.nom)) : this.produits();
+  });
+  readonly modulesAffiches = computed(() => {
+    const autorises = this.perimetreModules();
+    return autorises.length ? this.modulesTous().filter(m => autorises.includes(m)) : this.modulesTous();
+  });
   readonly contacts = signal<ContactClient[]>([]);
   readonly chargementContacts = signal(false);
   readonly societe = signal<SocieteClient | null>(null);
   readonly envoi = signal(false);
   readonly erreur = signal<string | null>(null);
+
+  // Anti-doublon (création manuelle) : tickets similaires à confirmer.
+  readonly doublons = signal<DoublonTicket[]>([]);
+  readonly verifDoublon = signal(false);
+  private readonly doublonConfirme = signal(false);
 
   /** Contacts separes selon qu'ils ont deja un compte Helpdesk ou non. */
   readonly contactsAvecCompte = computed(() => this.contacts().filter(c => c.aCompte));
@@ -88,20 +108,50 @@ export class TicketCreateComponent {
 
   constructor() {
     this.referenceService.produits().subscribe({ next: p => this.produits.set(p), error: () => {} });
+    this.referenceService.modules().subscribe({
+      next: m => { if (m.length) this.modulesTous.set(m.map(x => x.nom)); },
+      error: () => {}
+    });
 
-    // Contact choisi sans compte : on propose tout de suite de lui creer son acces.
     this.form.controls.contactEmail.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(email => {
         const contact = this.contacts().find(c => c.email === email);
+        // Contact choisi sans compte : on propose tout de suite de lui creer son acces.
         if (contact && !contact.aCompte) this.contactACreer.set(contact);
+        // Restreint Produit / Module au perimetre du client choisi (compte existant uniquement).
+        if (contact?.aCompte) this.chargerPerimetre(email);
+        else this.appliquerPerimetre({ produits: [], modules: [] });
       });
 
     // Admin / collaborateur : il choisit la societe et le contact pour le client.
     if (!this.auth.estClient()) {
       this.form.controls.clientTiers.addValidators(Validators.required);
       this.form.controls.contactEmail.addValidators(Validators.required);
+    } else {
+      // Client connecte : son propre perimetre s'applique a son ticket.
+      this.chargerPerimetre();
     }
+  }
+
+  /** Récupère le périmètre du client (ciblé par email, ou le client connecté) et l'applique. */
+  private chargerPerimetre(email?: string) {
+    this.referenceService.perimetreCreation(email).subscribe({
+      next: p => this.appliquerPerimetre(p),
+      error: () => this.appliquerPerimetre({ produits: [], modules: [] })
+    });
+  }
+
+  /** Applique le périmètre et retire la sélection courante si elle n'est plus autorisée. */
+  private appliquerPerimetre(p: { produits: string[]; modules: string[] }) {
+    this.perimetreProduits.set(p.produits ?? []);
+    this.perimetreModules.set(p.modules ?? []);
+    const produit = this.form.controls.produit.value;
+    if (produit && this.perimetreProduits().length && !this.perimetreProduits().includes(produit))
+      this.form.controls.produit.setValue('');
+    const module = this.form.controls.module.value;
+    if (module && this.perimetreModules().length && !this.perimetreModules().includes(module))
+      this.form.controls.module.setValue('');
   }
 
   surSociete(societe: SocieteClient | null) {
@@ -200,6 +250,45 @@ export class TicketCreateComponent {
       return;
     }
 
+    const v = this.form.getRawValue();
+    // Avertissement de doublon (tous rôles, client inclus), sauf si déjà confirmé.
+    // Pour un client, le périmètre est déduit côté serveur de son compte + sa société active.
+    const peutVerifier = this.auth.estClient() || (!!v.clientTiers && !!v.contactEmail);
+    if (!this.doublonConfirme() && peutVerifier) {
+      this.verifDoublon.set(true);
+      this.ticketService.verifierDoublon({
+        clientTiers: v.clientTiers || null,
+        contactEmail: v.contactEmail || null,
+        societe: this.auth.estClient() ? (this.auth.societeActive() || null) : null,
+        intitule: v.intitule,
+        produit: v.produit || null,
+        description: v.description || null
+      }).subscribe({
+        next: d => {
+          this.verifDoublon.set(false);
+          if (d.length) { this.doublons.set(d); return; }   // on attend la confirmation de l'utilisateur
+          this.creerTicket();
+        },
+        error: () => { this.verifDoublon.set(false); this.creerTicket(); } // la vérif ne doit pas bloquer la création
+      });
+      return;
+    }
+
+    this.creerTicket();
+  }
+
+  /** L'utilisateur crée malgré un ticket similaire signalé. */
+  confirmerMalgreDoublon() {
+    this.doublonConfirme.set(true);
+    this.doublons.set([]);
+    this.soumettre();
+  }
+
+  annulerDoublon() {
+    this.doublons.set([]);
+  }
+
+  private creerTicket() {
     this.envoi.set(true);
     this.erreur.set(null);
     const v = this.form.getRawValue();
@@ -214,6 +303,7 @@ export class TicketCreateComponent {
       importance: v.importance,
       clientTiers: v.clientTiers || null,
       contactEmail: v.contactEmail || null,
+      societe: this.auth.estClient() ? (this.auth.societeActive() || null) : null,
       dateEstimee: v.dateEstimee || null
     }).subscribe({
       next: ticket => this.joindrePuisOuvrir(ticket.id, ticket.produit),

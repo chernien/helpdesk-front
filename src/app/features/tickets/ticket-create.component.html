@@ -114,7 +114,7 @@
         <select id="produit" class="select" formControlName="produit"
                 [class.is-invalid]="invalide('produit')">
           <option value="">— Sélectionner —</option>
-          @for (produit of produits(); track produit.productId) {
+          @for (produit of produitsAffiches(); track produit.productId) {
             <option [value]="produit.nom">{{ produit.nom }}</option>
           }
         </select>
@@ -139,7 +139,7 @@
         <select id="module" class="select" formControlName="module"
                 [class.is-invalid]="invalide('module')">
           <option value="">— Sélectionner —</option>
-          @for (module of modules; track module) {
+          @for (module of modulesAffiches(); track module) {
             <option [value]="module">{{ module }}</option>
           }
         </select>
@@ -267,9 +267,11 @@
 
   <div class="actions">
     <a routerLink="/tickets" class="btn btn-ghost">Annuler</a>
-    <button type="submit" class="btn btn-primary" [disabled]="envoi()">
+    <button type="submit" class="btn btn-primary" [disabled]="envoi() || verifDoublon()">
       @if (envoi()) {
         <span class="spinner" aria-hidden="true"></span> Création…
+      } @else if (verifDoublon()) {
+        <span class="spinner" aria-hidden="true"></span> Vérification…
       } @else {
         Créer le ticket
       }
@@ -352,4 +354,37 @@
     <hd-compte-contact-dialog [societe]="soc" [contact]="contact"
                               (cree)="surCompteCree()" (ferme)="contactACreer.set(null)" />
   }
+}
+
+<!-- ============ Popup : doublon possible ============ -->
+@if (doublons().length) {
+  <div class="doublon-overlay" (click)="annulerDoublon()">
+    <div class="doublon-popup" role="dialog" aria-modal="true" aria-labelledby="doublon-titre" (click)="$event.stopPropagation()">
+      <h3 id="doublon-titre" class="doublon-titre">
+        <!-- Comme l'émoji ⚠️ (triangle plein, point d'exclamation blanc), mais du rouge du titre -->
+        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10.3 3.4a2 2 0 013.4 0l8.6 14.9a2 2 0 01-1.7 3H3.4a2 2 0 01-1.7-3l8.6-14.9z" fill="currentColor" />
+          <path d="M12 8.6v5.6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" />
+          <circle cx="12" cy="17.4" r="1.4" fill="#fff" />
+        </svg>
+        Un ticket similaire existe déjà
+      </h3>
+      <p class="doublon-intro">Pour ce client, {{ doublons().length }} ticket(s) proche(s) de votre saisie ont été trouvés :</p>
+      <ul class="doublon-liste">
+        @for (d of doublons(); track d.id) {
+          <li>
+            <a [routerLink]="['/tickets', d.id]" target="_blank">#{{ d.id }} — {{ d.intitule }}</a>
+            <span class="doublon-meta">
+              @if (d.produit) { {{ d.produit }} · } @if (d.etat) { {{ d.etat }} }
+            </span>
+          </li>
+        }
+      </ul>
+      <p class="doublon-intro">Vérifiez qu'il ne s'agit pas de la même demande avant de continuer.</p>
+      <div class="doublon-actions">
+        <button type="button" class="btn btn-ghost" (click)="annulerDoublon()">Revenir au formulaire</button>
+        <button type="button" class="btn btn-primary" (click)="confirmerMalgreDoublon()">Créer quand même</button>
+      </div>
+    </div>
+  </div>
 }

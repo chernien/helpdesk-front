@@ -1,0 +1,242 @@
+/* Intégration boîte mail — look Divalto / Bitrix24 : POPUP CENTRÉ (fond bleu dégradé, grandes tuiles). */
+
+/* Fond sombre plein écran */
+.mb-voile {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 20, 40, .55);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  animation: mb-fondu 160ms ease;
+}
+
+/* Modale centrée au milieu de l'écran */
+.mb-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(820px, calc(100vw - 40px));
+  max-height: min(600px, calc(100vh - 48px));
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  overflow: hidden;
+  z-index: 1001;
+  color: #eaf2fb;
+  box-shadow: 0 30px 90px rgba(0, 10, 30, .55);
+  animation: mb-apparait 200ms cubic-bezier(.2, .8, .3, 1);
+  background:
+    radial-gradient(900px 520px at 72% 4%, rgba(130, 190, 255, .28), transparent 60%),
+    radial-gradient(700px 500px at 8% 110%, rgba(8, 30, 60, .6), transparent 65%),
+    linear-gradient(135deg, #0b3a66 0%, #124a7e 46%, #0c3760 100%);
+}
+@keyframes mb-fondu { from { opacity: 0; } }
+@keyframes mb-apparait { from { opacity: 0; transform: translate(-50%, -46%) scale(.98); } }
+
+/* Affichage intégré : panneau plein, BLEU TRANSPARENT (verre dépoli), avec bouton fermer. */
+.mb-embed {
+  position: relative;
+  flex: none;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  color: #eaf2fb;
+  border: none;
+  box-shadow: 0 10px 34px rgba(12, 40, 80, .18);
+  /* Bleu vif et riche (look Bitrix24), avec un reflet clair en haut à droite. */
+  background:
+    radial-gradient(1200px 720px at 80% -12%, rgba(140, 200, 255, .40), transparent 55%),
+    radial-gradient(900px 600px at 4% 115%, rgba(6, 28, 60, .45), transparent 60%),
+    linear-gradient(135deg, #0a3f7a 0%, #135aa8 46%, #0c4e97 100%);
+}
+/* Bouton fermer au coin HAUT-GAUCHE, à l'intérieur (comme Divalto / Bitrix24). */
+.mb-embed .mb-fermer {
+  left: 12px;
+  right: auto;
+  top: 12px;
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  box-shadow: none;
+}
+.mb-embed .mb-fermer:hover { background: rgba(255, 255, 255, .32); }
+/* Contenu (hauteur = contenu), panneau plus haut. */
+.mb-embed .mb-scene {
+  flex: none;
+  justify-content: flex-start;
+  padding: 54px 28px 64px;
+}
+/* Tuiles plus petites, placées sous le titre. */
+.mb-embed .mb-grand-titre { margin: 10px 0 56px; }
+.mb-embed .mb-tiles { max-width: 320px; gap: 16px; }
+.mb-embed .mb-tile { gap: 9px; border-radius: 11px; }
+.mb-embed .mb-tile-logo { height: 36px; }
+.mb-embed .mb-tile-logo svg { width: 34px; height: 34px; }
+.mb-embed .mb-tile-nom { font-size: 14px; }
+
+/* Tuiles plus petites aussi dans la modale centrée. */
+.mb-modal .mb-tiles { max-width: 300px; gap: 16px; }
+.mb-modal .mb-tile { gap: 9px; border-radius: 11px; }
+.mb-modal .mb-tile-logo { height: 34px; }
+.mb-modal .mb-tile-logo svg { width: 32px; height: 32px; }
+.mb-modal .mb-tile-nom { font-size: 14px; }
+
+/* Bouton fermer en haut à droite */
+.mb-fermer {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 140ms;
+}
+.mb-fermer:hover { background: rgba(255, 255, 255, .32); }
+
+.mb-scene {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+}
+
+.mb-grand-titre {
+  margin: 0 0 36px;
+  font: 400 26px var(--bx-police);
+  text-align: center;
+  color: #fff;
+}
+
+/* Grandes tuiles */
+.mb-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+  width: 100%;
+  max-width: 440px;
+}
+.mb-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  aspect-ratio: 1 / .82;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(4, 20, 40, .26);
+  transition: transform 160ms, box-shadow 160ms;
+}
+.mb-tile:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(4, 20, 40, .38); }
+.mb-tile-logo { display: grid; place-items: center; height: 44px; }
+.mb-tile-nom { font: 600 15px var(--bx-police); color: #2a2f36; }
+
+/* Retour */
+.mb-retour {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 18px;
+  padding: 4px 6px;
+  border: none;
+  background: none;
+  font: 600 13px var(--bx-police);
+  color: rgba(234, 242, 251, .85);
+  cursor: pointer;
+}
+.mb-retour:hover { color: #fff; }
+
+/* Carte blanche (formulaire / connecté) */
+.mb-carte {
+  width: 100%;
+  max-width: 380px;
+  background: #fff;
+  color: var(--bx-texte);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(4, 20, 40, .3);
+}
+.mb-form { padding: 20px 22px 22px; }
+.mb-form-titre {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px;
+  font: 700 17px var(--bx-police);
+  color: var(--bx-texte);
+}
+.mb-tile-logo.petit { height: auto; }
+
+.mb-aide {
+  margin: 8px 0 16px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #fff7e6;
+  border: 1px solid #ffe2ad;
+  font-size: 12.5px;
+  color: #92400e;
+}
+.mb-champ { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.mb-champ > span { font-size: 12.5px; font-weight: 600; color: var(--bx-texte-2); }
+.mb-err {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #fdecec;
+  border: 1px solid #f6c9ca;
+  font-size: 12.5px;
+  color: var(--bx-rouge);
+}
+.mb-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mb-actions small { font-size: 11.5px; color: var(--bx-gris-clair); }
+
+/* Bouton « Se connecter avec Microsoft » */
+.mb-btn-ms {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  color: #2a2f36;
+  font: 600 14px var(--bx-police);
+  cursor: pointer;
+  transition: background 140ms, box-shadow 140ms;
+}
+.mb-btn-ms:hover:not(:disabled) { background: #f7f9fc; box-shadow: 0 2px 8px rgba(4, 20, 40, .12); }
+.mb-btn-ms:disabled { opacity: .7; cursor: default; }
+.mb-ms-logo { display: inline-flex; }
+.mb-note { display: block; margin-top: 10px; font-size: 11.5px; color: var(--bx-gris-clair); text-align: center; }
+
+/* Boîte connectée */
+.mb-connectee { display: flex; align-items: center; gap: 12px; padding: 16px 18px; margin-top: 20px; }
+.mb-point { width: 10px; height: 10px; flex-shrink: 0; border-radius: 50%; background: var(--bx-vert); box-shadow: 0 0 0 3px rgba(27, 206, 123, .2); }
+.mb-connectee-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mb-connectee-txt strong { font-size: 14px; color: var(--bx-texte); }
+.mb-connectee-txt small { font-size: 12.5px; color: var(--bx-gris); }
+.mb-info { margin: 14px 0 0; font-size: 12.5px; color: rgba(234, 242, 251, .72); text-align: center; }
+
+@media (max-width: 560px) {
+  .mb-grand-titre { font-size: 21px; }
+  .mb-tiles { gap: 14px; }
+}

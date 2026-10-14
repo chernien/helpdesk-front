@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ReferenceService } from '../../core/services/reference.service';
 import { TicketService } from '../../core/services/ticket.service';
 import {
-  ContactClient, IMPORTANCES, MODULES, Produit, SocieteClient, TYPES_TICKET, Ticket, UpdateTicketRequest
+  ContactClient, IMPORTANCES, MODULES, Produit, SocieteClient, TYPES_TICKET, Ticket, UpdateTicketRequest, tailleFichier
 } from '../../core/models/models';
 import { SocieteAutocompleteComponent } from '../../shared/societe-autocomplete.component';
 
@@ -77,6 +77,34 @@ import { SocieteAutocompleteComponent } from '../../shared/societe-autocomplete.
         <div class="champ">
           <label class="label" for="ed-description">Description</label>
           <textarea id="ed-description" class="textarea" formControlName="description" rows="4"></textarea>
+        </div>
+
+        <!-- Pièce jointe : ajouter ou remplacer le fichier du ticket -->
+        <div class="champ">
+          <label class="label">Pièce jointe</label>
+          @if (ticket.fichierNom && !fichier()) {
+            <div class="pj-actuelle">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5l-7.8 7.8a5 5 0 01-7-7L13 4.5a3.3 3.3 0 014.7 4.7L10 16.9a1.7 1.7 0 01-2.4-2.4l7.1-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              <span class="pj-nom">{{ ticket.fichierNom }}</span>
+              @if (ticket.fichierTaille) { <small>{{ tailleFichier(ticket.fichierTaille) }}</small> }
+              <span class="pj-actuel-tag">actuel</span>
+            </div>
+          }
+          @if (fichier(); as f) {
+            <div class="pj-choisie">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5l-7.8 7.8a5 5 0 01-7-7L13 4.5a3.3 3.3 0 014.7 4.7L10 16.9a1.7 1.7 0 01-2.4-2.4l7.1-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              <span class="pj-nom">{{ f.name }}</span>
+              <small>{{ tailleFichier(f.size) }}</small>
+              <button type="button" class="pj-x" (click)="retirerFichier()" aria-label="Retirer le fichier">✕</button>
+            </div>
+          } @else {
+            <label class="pj-zone" for="ed-fichier">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5l-7.8 7.8a5 5 0 01-7-7L13 4.5a3.3 3.3 0 014.7 4.7L10 16.9a1.7 1.7 0 01-2.4-2.4l7.1-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              {{ ticket.fichierNom ? 'Remplacer le fichier…' : 'Joindre un fichier…' }} <small>10 Mo max</small>
+            </label>
+            <input id="ed-fichier" type="file" class="sr-only" (change)="surFichier($event)" />
+          }
+          @if (erreurFichier()) { <p class="error" role="alert">{{ erreurFichier() }}</p> }
         </div>
 
         <!-- Client : section optionnelle, le ticket ne stocke pas le code tiers -->
@@ -163,6 +191,27 @@ import { SocieteAutocompleteComponent } from '../../shared/societe-autocomplete.
       text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
     }
     .alerte { padding: var(--sp-3); border-radius: var(--r-md); background: var(--danger-bg); color: #991b1b; font-size: 14px; }
+    .pj-actuelle, .pj-choisie {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: var(--r-md); font-size: 13px;
+    }
+    .pj-actuelle { background: var(--surface-2); border: 1px solid var(--border); color: var(--ink-soft); }
+    .pj-choisie { background: var(--brand-50); border: 1px solid var(--brand-100); color: var(--brand-700); }
+    .pj-actuelle svg, .pj-choisie svg { flex-shrink: 0; color: var(--muted); }
+    .pj-choisie svg { color: var(--brand-600); }
+    .pj-nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+    .pj-actuelle small, .pj-choisie small { color: var(--muted); }
+    .pj-actuel-tag { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .pj-x { flex-shrink: 0; width: 22px; height: 22px; border: none; border-radius: 50%; background: rgba(15, 23, 42, .06); color: var(--muted); cursor: pointer; }
+    .pj-x:hover { background: var(--danger-bg); color: var(--danger); }
+    .pj-zone {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 12px; border: 1.5px dashed var(--border-strong); border-radius: var(--r-md);
+      background: var(--surface); color: var(--ink-soft); font-size: 13.5px; font-weight: 600; cursor: pointer;
+      transition: border-color var(--t-fast), background var(--t-fast);
+    }
+    .pj-zone:hover { border-color: var(--brand-500); background: var(--brand-50); color: var(--brand-700); }
+    .pj-zone small { font-weight: 500; color: var(--muted); }
     .actions {
       display: flex; justify-content: flex-end; gap: var(--sp-2);
       margin-top: var(--sp-2); padding-top: var(--sp-4); border-top: 1px solid var(--border);
@@ -195,6 +244,11 @@ export class TicketEditionDialogComponent implements OnInit, OnDestroy {
   readonly contacts = signal<ContactClient[]>([]);
   readonly envoi = signal(false);
   readonly erreur = signal<string | null>(null);
+  /** Pièce jointe à ajouter / remplacer sur le ticket. */
+  readonly fichier = signal<File | null>(null);
+  readonly erreurFichier = signal<string | null>(null);
+  readonly tailleFichier = tailleFichier;
+  private static readonly TAILLE_MAX = 10 * 1024 * 1024;
 
   readonly form = this.fb.nonNullable.group({
     intitule: ['', [Validators.required, Validators.maxLength(200)]],
@@ -241,6 +295,24 @@ export class TicketEditionDialogComponent implements OnInit, OnDestroy {
     return c.touched && c.invalid;
   }
 
+  surFichier(evenement: Event) {
+    const entree = evenement.target as HTMLInputElement;
+    const choisi = entree.files?.[0] ?? null;
+    entree.value = '';
+    this.erreurFichier.set(null);
+    if (!choisi) return;
+    if (choisi.size > TicketEditionDialogComponent.TAILLE_MAX) {
+      this.erreurFichier.set(`« ${choisi.name} » dépasse 10 Mo (${tailleFichier(choisi.size)}).`);
+      return;
+    }
+    this.fichier.set(choisi);
+  }
+
+  retirerFichier() {
+    this.fichier.set(null);
+    this.erreurFichier.set(null);
+  }
+
   basculerClient() {
     this.changerClient.update(v => !v);
     this.societe.set(null);
@@ -285,12 +357,31 @@ export class TicketEditionDialogComponent implements OnInit, OnDestroy {
       requete.contactEmail = v.contactEmail;
     }
 
-    if (Object.keys(requete).length === 0) { this.ferme.emit(); return; }
+    const fichier = this.fichier();
+    if (Object.keys(requete).length === 0 && !fichier) { this.ferme.emit(); return; }
 
     this.envoi.set(true);
     this.erreur.set(null);
+
+    // Les corrections de champs partent d'abord, puis la pièce jointe éventuelle.
+    const joindrePuisEmettre = (maj: Ticket) => {
+      if (!fichier) { this.enregistre.emit(maj); return; }
+      this.ticketService.joindreFichier(this.ticket.id, fichier).subscribe({
+        next: avecFichier => this.enregistre.emit(avecFichier),
+        error: e => {
+          this.envoi.set(false);
+          this.erreur.set('Corrections enregistrées, mais la pièce jointe n\'a pas pu être envoyée : '
+            + (e.error?.message ?? 'réessayez.'));
+        }
+      });
+    };
+
+    if (Object.keys(requete).length === 0) {
+      joindrePuisEmettre(this.ticket); // uniquement une pièce jointe, aucun champ modifié
+      return;
+    }
     this.ticketService.modifier(this.ticket.id, requete).subscribe({
-      next: maj => this.enregistre.emit(maj),
+      next: joindrePuisEmettre,
       error: e => {
         this.envoi.set(false);
         this.erreur.set(e.error?.message ?? "Les corrections n'ont pas pu être enregistrées.");

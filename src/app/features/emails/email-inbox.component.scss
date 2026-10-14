@@ -1,0 +1,477 @@
+/* ============================================================
+   Boite mail facon Divalto / Bitrix24
+   Fond illustre (traits de lumiere sur bleu-vert), commandes en verre,
+   barre d'actions et liste en cartes blanches arrondies.
+   ============================================================ */
+
+:host { display: block; font-family: var(--bx-police); }
+
+.ib-page {
+  min-height: calc(100dvh - var(--header-h));
+  padding: 16px 22px 32px;
+  color: var(--bx-texte);
+  /* Même fond clair que la page Tickets (corps de l'app). */
+  background:
+    radial-gradient(1100px 420px at 18% -8%, rgba(74, 159, 220, .10), transparent 60%),
+    radial-gradient(900px 380px at 95% -12%, rgba(109, 40, 217, .05), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* ══ Ligne du haut ══ */
+.ib-haut {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.ib-nouveau { height: 34px; padding: 0 16px; box-shadow: var(--e1); }
+
+.ib-recherche {
+  position: relative;
+  flex: 0 1 700px;
+  min-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 8px 0 4px;
+  border: 1px solid var(--bx-ligne-2);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--e1);
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.ib-recherche:focus-within { border-color: var(--bx-accent); box-shadow: 0 0 0 3px rgba(30, 127, 224, .12); }
+
+.ib-puce {
+  display: inline-flex;
+  align-items: center;
+  max-width: 260px;
+  height: 26px;
+  border-radius: 5px;
+  background: #eef2f5;
+}
+.ib-puce-btn {
+  min-width: 0;
+  height: 100%;
+  padding: 0 8px;
+  border: none;
+  background: none;
+  font: 12px var(--bx-police);
+  color: var(--bx-texte-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.ib-puce-x {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 100%;
+  border: none;
+  background: none;
+  color: var(--bx-gris);
+  cursor: pointer;
+}
+.ib-puce-x:hover { color: var(--bx-texte); }
+.ib-puce-zone .bx-menu { top: calc(100% + 8px); }
+
+.ib-saisie {
+  flex: 1;
+  min-width: 60px;
+  height: 100%;
+  padding: 0 4px;
+  border: none;
+  background: none;
+  font: 13px var(--bx-police);
+  color: var(--bx-texte);
+}
+.ib-saisie::placeholder { color: var(--bx-gris-clair); }
+.ib-saisie:focus { outline: none; }
+.ib-saisie::-webkit-search-cancel-button { display: none; }
+.ib-loupe { flex-shrink: 0; color: var(--bx-gris); }
+.ib-effacer {
+  display: grid;
+  place-items: center;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--bx-gris);
+  cursor: pointer;
+}
+.ib-effacer:hover { color: var(--bx-texte); }
+
+.ib-verre {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  margin-left: auto;
+  padding: 0 14px;
+  border: 1px solid var(--bx-ligne-2);
+  border-radius: 8px;
+  background: #fff;
+  font: 12px var(--bx-police);
+  color: var(--bx-texte-2);
+  cursor: pointer;
+  box-shadow: var(--e1);
+  transition: border-color 150ms, color 150ms;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ib-verre:hover { border-color: #b9c2c9; color: var(--bx-texte); }
+.ib-verre svg { flex-shrink: 0; }
+
+/* Bouton « Ma boîte » (le premier .ib-verre pousse le groupe à droite via margin-left:auto) */
+.ib-boite { margin-left: auto; max-width: 240px; flex-shrink: 1; min-width: 0; }
+.ib-verre + .ib-verre { margin-left: 0; }
+.ib-boite-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Interrupteur Agent IA : OFF (neutre) / ON (vert) */
+.ib-agent { font-weight: 700; }
+.ib-agent:disabled { opacity: .55; cursor: default; }
+.ib-agent.on {
+  border-color: #1aa06d; color: #0f7a52; background: #e9f9f1;
+}
+.ib-agent.on:hover { border-color: #0f7a52; color: #0b5e3f; }
+/* Modèle IA en quota / indisponible : agent en pause */
+.ib-agent.pause {
+  border-color: #f59e0b; color: #b45309; background: #fef3c7;
+}
+.ib-agent.pause:hover { border-color: #b45309; color: #92400e; }
+/* Modèle IA de l'agent (ouvre la liste pour basculer) */
+.ib-modele { font-weight: 600; max-width: 210px; }
+.ib-modele svg { flex-shrink: 0; }
+.ib-modele-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ib-boite-point {
+  width: 8px; height: 8px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bx-vert);
+  box-shadow: 0 0 0 2px rgba(27, 206, 123, .22);
+}
+
+/* ══ Onglet dossiers + compteur ══ */
+.ib-ligne2 { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ib-onglet {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--bx-ligne-2);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--bx-texte-2);
+  cursor: pointer;
+  box-shadow: var(--e1);
+  transition: border-color 150ms, background 150ms, color 150ms;
+}
+.ib-onglet:hover { border-color: #b9c2c9; color: var(--bx-texte); }
+.ib-onglet.actif { border-color: #9cc7f3; background: #e8f3fe; color: var(--bx-lien); }
+
+.ib-compteur {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--bx-ligne-2);
+  border-radius: 16px;
+  background: #fff;
+  font: 600 13px var(--bx-police);
+  color: var(--bx-texte-2);
+  cursor: pointer;
+  box-shadow: var(--e1);
+  transition: border-color 150ms, background 150ms, color 150ms;
+}
+.ib-compteur:hover { border-color: #b9c2c9; color: var(--bx-texte); }
+.ib-compteur.actif { border-color: #9cc7f3; background: #e8f3fe; color: var(--bx-lien); }
+.ib-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #f5462e;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ══ Cadre : dossiers + contenu ══ */
+.ib-cadre { display: flex; align-items: flex-start; gap: 14px; }
+.ib-principal { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+.ib-dossiers {
+  position: sticky;
+  top: calc(var(--header-h) + 12px);
+  flex: 0 0 230px;
+  max-height: calc(100dvh - var(--header-h) - 40px);
+  overflow-y: auto;
+  padding: 8px 0 10px;
+  animation: bxFondu 200ms ease-out both;
+}
+.ib-dossiers-titre {
+  padding: 8px 16px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--bx-gris-clair);
+}
+.ib-dossiers-vide { margin: 0; padding: 8px 16px; font-size: 12.5px; color: var(--bx-gris); }
+.ib-dossier {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 14px 0 16px;
+  border: none;
+  border-left: 3px solid transparent;
+  background: none;
+  font: 13px var(--bx-police);
+  color: var(--bx-texte-2);
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.ib-dossier svg { flex-shrink: 0; color: var(--bx-gris-clair); }
+.ib-dossier:hover { background: #f4f7f9; color: var(--bx-texte); }
+.ib-dossier.actif { border-left-color: var(--bx-accent); background: #eef6ff; color: var(--bx-lien); font-weight: 600; }
+.ib-dossier.actif svg { color: var(--bx-accent); }
+.ib-dossier.cible { background: #e2f7ec; box-shadow: inset 0 0 0 2px var(--bx-vert); color: var(--bx-texte); }
+.ib-dossier-nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ib-dossier-nb { font-size: 12px; font-weight: 600; color: var(--bx-accent); }
+
+/* ══ Barre d'actions groupees ══ */
+.ib-outils {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-height: 52px;
+  padding: 6px 16px;
+}
+.ib-case { display: grid; place-items: center; width: 28px; height: 28px; flex-shrink: 0; cursor: pointer; }
+.ib-case input { width: 15px; height: 15px; margin: 0; accent-color: var(--bx-accent); cursor: pointer; }
+.ib-selection {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 0 8px;
+  font-size: 13px;
+  color: var(--bx-gris-clair);
+  white-space: nowrap;
+}
+.ib-selection.actif { color: var(--bx-texte); font-weight: 600; }
+.ib-selection-x {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--bx-gris-clair);
+  cursor: pointer;
+}
+.ib-selection-x:hover:not(:disabled) { background: #f1f3f5; color: var(--bx-texte); }
+.ib-selection-x:disabled { cursor: default; }
+.ib-sep { width: 1px; height: 18px; margin: 0 8px; background: var(--bx-ligne-2); }
+
+.ib-outil {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font: 600 11px var(--bx-police);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--bx-texte-2);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+.ib-outil svg { color: var(--bx-gris); }
+.ib-outil:hover:not(:disabled) { background: #f2f5f7; color: var(--bx-texte); }
+.ib-outil:disabled { color: #c3c8cd; cursor: default; }
+.ib-outil:disabled svg { color: #cfd4d8; }
+.ib-mini-spinner { width: 16px; height: 16px; border-width: 2px; margin-left: 8px; }
+
+/* ══ Liste ══ */
+.ib-liste { overflow: hidden; }
+.ib-lignes { list-style: none; margin: 0; padding: 0; }
+
+.ib-ligne {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 16px 0 16px;
+  border-bottom: 1px solid var(--bx-ligne);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 100ms;
+}
+.ib-ligne:last-child { border-bottom: none; }
+.ib-ligne:hover { background: #f7f9fa; }
+.ib-ligne.cochee { background: #f1f7fe; }
+.ib-ligne.ouverte { background: #e9f3fd; }
+.ib-ligne.glissee { opacity: .45; }
+.ib-ligne:focus-visible { outline: 2px solid var(--bx-accent); outline-offset: -2px; border-radius: 0; }
+
+.ib-poignee { display: grid; place-items: center; width: 24px; flex-shrink: 0; color: #cdd2d6; cursor: grab; }
+.ib-ligne:hover .ib-poignee { color: var(--bx-gris-clair); }
+
+.ib-point { width: 7px; height: 7px; margin: 0 9px 0 5px; flex-shrink: 0; border-radius: 50%; }
+.ib-ligne.non-lu .ib-point { background: var(--bx-accent); }
+
+.ib-ligne .bx-avatar { margin-right: 12px; }
+
+.ib-de {
+  flex: 0 0 200px;
+  min-width: 0;
+  margin-right: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--bx-texte-2);
+}
+.ib-ligne.non-lu .ib-de { font-weight: 700; color: var(--bx-texte); }
+
+.ib-objet {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ib-objet-txt { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--bx-texte); }
+.ib-ligne.non-lu .ib-objet-txt { font-weight: 700; color: var(--bx-accent); }
+.ib-apercu { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; color: var(--bx-gris-clair); }
+.ib-apercu::before { content: '— '; }
+
+.ib-trombone { flex-shrink: 0; margin-left: 8px; color: var(--bx-gris-clair); }
+
+.ib-heure {
+  flex: 0 0 70px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--bx-gris-clair);
+  white-space: nowrap;
+}
+.ib-ligne.non-lu .ib-heure { color: var(--bx-gris); }
+
+.ib-pastilles { display: flex; align-items: center; gap: 6px; margin-left: 20px; flex-shrink: 0; }
+
+/* Supprimer le ticket lié (admin) : collé au badge « Ticket #N » */
+.ib-suppr-ticket {
+  display: grid; place-items: center;
+  width: 22px; height: 22px; margin-left: -3px;
+  border: 1px solid var(--bx-ligne-2); border-radius: 11px;
+  background: #fff; color: var(--bx-gris-clair);
+  cursor: pointer;
+  transition: color 150ms, background 150ms, border-color 150ms;
+}
+.ib-suppr-ticket:hover { color: #dc2626; background: #fee2e2; border-color: #fca5a5; }
+.ib-suppr-ticket:focus-visible { outline: 2px solid #dc2626; outline-offset: 2px; }
+
+/* ══ Etats ══ */
+.ib-squelette {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 52px;
+  padding: 0 24px 0 90px;
+  border-bottom: 1px solid var(--bx-ligne);
+}
+.sq-rond, .sq-barre {
+  background: linear-gradient(90deg, #f0f3f5 25%, #e6ebee 37%, #f0f3f5 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+.sq-rond { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; }
+.sq-barre { height: 10px; flex: 1; max-width: 420px; border-radius: 5px; }
+.sq-barre.court { flex: 0 0 150px; }
+
+.ib-vide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 64px 20px;
+  text-align: center;
+  color: var(--bx-gris);
+}
+.ib-vide svg { color: #cfd6db; margin-bottom: 4px; }
+.ib-vide strong { font-size: 15px; font-weight: 600; color: var(--bx-texte-2); }
+.ib-vide span { max-width: 460px; font-size: 13px; }
+.ib-vide .bx-btn { margin-top: 8px; }
+
+.ib-plus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px;
+  border-top: 1px solid var(--bx-ligne);
+}
+.ib-plus small { font-size: 12px; color: var(--bx-gris-clair); }
+
+/* ══ Responsive ══ */
+@media (max-width: 1600px) {
+  /* Barre du haut chargée (agent IA) : e-mail de la boîte et « Actualiser » en icônes (infobulles). */
+  .ib-boite-txt, .ib-actualiser span { display: none; }
+  .ib-boite { flex-shrink: 0; }
+}
+@media (max-width: 1500px) {
+  .ib-apercu { display: none; }
+}
+@media (max-width: 1280px) {
+  .ib-haut { flex-wrap: wrap; }
+  .ib-recherche { order: 3; flex-basis: 100%; }
+  .ib-pastilles .secondaire .lbl { display: none; }
+  .ib-pastilles .secondaire { padding: 0 7px; }
+  .ib-de { flex-basis: 170px; }
+}
+@media (max-width: 1024px) {
+  .ib-dossiers { position: fixed; top: auto; left: 12px; bottom: 12px; z-index: 20; max-height: 60dvh; box-shadow: 0 10px 40px rgba(0, 0, 0, .3); }
+  .ib-pastilles .secondaire { display: none; }
+}
+@media (max-width: 760px) {
+  .ib-page { padding: 12px 10px 24px; }
+  .ib-haut { flex-wrap: wrap; }
+  .ib-recherche { order: 3; flex-basis: 100%; }
+  .ib-verre span { display: none; }
+  .ib-outils { padding: 6px 8px; }
+  .ib-outil { font-size: 0; gap: 0; padding: 0 9px; }
+  .ib-outil svg { width: 17px; height: 17px; }
+  .ib-sep { display: none; }
+  .ib-ligne { height: 60px; padding: 0 10px 0 6px; }
+  .ib-poignee { display: none; }
+  .ib-de { flex-basis: 34%; margin-right: 8px; }
+  .ib-heure { flex-basis: 48px; }
+  .ib-pastilles { display: none; }
+}
+
+/* ══ Écran d'intégration plein (aucune boîte reliée) — look Divalto / Bitrix24 ══ */
+.ib-integration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ib-integration hd-mailbox-settings-slider {
+  flex: none;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+}

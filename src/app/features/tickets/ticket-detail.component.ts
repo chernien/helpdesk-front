@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TicketEditionDialogComponent } from './ticket-edition-dialog.component';
+import { ChatOuvertureService } from '../../core/services/chat-ouverture.service';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ReferenceService } from '../../core/services/reference.service';
@@ -38,6 +39,7 @@ export class TicketDetailComponent {
   private toast = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
   readonly auth = inject(AuthService);
+  readonly chat = inject(ChatOuvertureService);
 
   readonly classeEtat = classeEtat;
   readonly classeImportance = classeImportance;
@@ -85,6 +87,11 @@ export class TicketDetailComponent {
   readonly confirmationAnnulation = signal(false);
   /** Popup de correction du ticket (administrateur). */
   readonly edition = signal(false);
+
+  /** Fusion de doublons (administrateur) : saisie du n° de ticket cible. */
+  readonly fusionOuverte = signal(false);
+  readonly cibleFusion = signal('');
+  readonly fusionEnCours = signal(false);
 
   readonly peutTraiter = computed(() => !this.auth.estClient());
   readonly estTermine = computed(() => {
@@ -178,24 +185,36 @@ export class TicketDetailComponent {
     this.auth.estClient() && this.ticket()?.etat === 'En attente de validation');
 
   constructor() {
-    this.charger(true);
+    this.charger();
 
     // Mise a jour en direct : un collegue ou le client fait evoluer le ticket.
     let premierPassage = true;
     effect(() => {
       this.notifications.signalRafraichir();
       if (premierPassage) { premierPassage = false; return; }
-      this.charger(false);
+      this.charger();
+    }, { allowSignalWrites: true });
+
+    // Recharge la liste « Confier à… » dès que le produit du ticket change (ex. après « Modifier »).
+    effect(() => {
+      const produit = this.ticket()?.produit ?? null;
+      if (produit !== this.produitCollaborateurs) {
+        this.produitCollaborateurs = produit;
+        this.chargerCollaborateurs(produit);
+      }
     }, { allowSignalWrites: true });
   }
 
-  private charger(initial: boolean) {
+  /** Produit pour lequel la liste des collaborateurs est actuellement chargée. */
+  private produitCollaborateurs: string | null = null;
+
+  private charger() {
     this.ticketService.parId(this.ticketId).subscribe({
       next: ticket => {
         this.ticket.set(ticket);
         this.resolution.set(ticket.resolution ?? '');
         this.chargement.set(false);
-        if (initial) this.chargerCollaborateurs(ticket.produit);
+        // La liste « Confier à… » est (re)chargée par l'effect qui suit le produit du ticket.
       },
       error: () => {
         this.chargement.set(false);
@@ -274,6 +293,42 @@ export class TicketDetailComponent {
     this.envoyer('etat:Annulé', { etat: 'Annulé' }, 'Ticket annulé');
   }
 
+  // ---------- Fusion de doublons (administrateur) ----------
+
+  ouvrirFusion() {
+    this.cibleFusion.set('');
+    this.fusionOuverte.set(true);
+  }
+  fermerFusion() {
+    this.fusionOuverte.set(false);
+  }
+  confirmerFusion() {
+    const cible = Number((this.cibleFusion() || '').trim().replace('#', ''));
+    const source = this.ticket()?.id;
+    if (!source) return;
+    if (!Number.isInteger(cible) || cible <= 0) {
+      this.toast.erreur('Numéro invalide', 'Saisissez le numéro du ticket cible (ex. 1442).');
+      return;
+    }
+    if (cible === source) {
+      this.toast.erreur('Fusion impossible', 'La cible doit être un autre ticket.');
+      return;
+    }
+    this.fusionEnCours.set(true);
+    this.ticketService.fusionner(source, cible).subscribe({
+      next: () => {
+        this.fusionEnCours.set(false);
+        this.fusionOuverte.set(false);
+        this.toast.succes('Tickets fusionnés', `Ce ticket a été fusionné dans le #${cible}.`);
+        this.router.navigate(['/tickets', cible]);
+      },
+      error: e => {
+        this.fusionEnCours.set(false);
+        this.toast.erreur('Fusion impossible', e.error?.message ?? 'Réessayez dans un instant.');
+      }
+    });
+  }
+
   // ---------- Décision du client (ticket en attente de validation) ----------
 
   validerSolution() {
@@ -305,6 +360,7 @@ export class TicketDetailComponent {
   @HostListener('document:keydown.escape')
   surEchap() {
     this.confirmationAnnulation.set(false);
+    this.fusionOuverte.set(false);
   }
 
   enregistrerResolution() {

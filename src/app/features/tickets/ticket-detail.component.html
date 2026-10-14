@@ -17,6 +17,14 @@
     <span aria-current="page">#{{ t.id }}</span>
   </nav>
 
+  <!-- Discussion + e-mail (façon « Discussion » / « Envoyer un message » de Divalto) -->
+  <div class="actions-comm">
+    <button type="button" class="btn-comm discussion" (click)="chat.ouvrir(t.id, t.intitule)">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 11.5a8 8 0 01-11.6 7.1L4 20l1.4-5.4A8 8 0 1121 11.5z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" /></svg>
+      Discussion
+    </button>
+  </div>
+
   <!-- En-tete en forme de ticket : talon (numero, etat) + corps -->
   <div class="ticket-ombre entete-ombre">
     <header class="tete ticket-v" [attr.data-etat]="t.etat">
@@ -48,6 +56,12 @@
                 <path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
               Modifier
+            </button>
+            <button class="btn btn-ghost btn-sm" (click)="ouvrirFusion()" title="Fusionner ce ticket dans un autre (doublon)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 4v6a5 5 0 005 5h0a5 5 0 005-5V4M12 15v5M9 17l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Fusionner
             </button>
             <button class="btn btn-ghost btn-sm danger-txt" (click)="supprimer()">Supprimer</button>
           </div>
@@ -501,6 +515,26 @@
   }
   @if (edition()) {
     <hd-ticket-edition-dialog [ticket]="t" (enregistre)="surTicketCorrige($event)" (ferme)="edition.set(false)" />
+  }
+
+  @if (fusionOuverte()) {
+    <div class="voile-modal" (click)="fermerFusion()" aria-hidden="true"></div>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="titre-fusion">
+      <h2 id="titre-fusion">Fusionner le ticket #{{ t.id }}</h2>
+      <p class="modal-texte">
+        Ce ticket sera <strong>clôturé</strong> et son suivi + sa discussion basculeront vers le ticket
+        cible (doublon conservé). Indiquez le numéro du ticket à conserver :
+      </p>
+      <input class="champ-fusion" type="number" min="1" placeholder="Ex : 1442" autofocus
+             [value]="cibleFusion()" (input)="cibleFusion.set($any($event.target).value)"
+             (keydown.enter)="confirmerFusion()" />
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" (click)="fermerFusion()">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="confirmerFusion()" [disabled]="fusionEnCours()">
+          @if (fusionEnCours()) { Fusion… } @else { Fusionner dans ce ticket }
+        </button>
+      </div>
+    </div>
   }
   }
 }

@@ -1,4 +1,4 @@
-:host { display: block; animation: pageIn 380ms var(--ease-out) both; }
+:host { display: block; animation: pageIn 380ms var(--ease-out) backwards; }
 
 .fil {
   display: flex;
@@ -340,3 +340,24 @@ form .bloc-marge { margin-bottom: var(--sp-4); }
   cursor: pointer;
 }
 .lien-action:hover { color: var(--brand-700); }
+
+/* Popup : doublon possible (anti-duplication de tickets) */
+.doublon-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(20, 30, 50, .45);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.doublon-popup {
+  width: min(520px, 100%); max-height: 85vh; overflow: auto;
+  background: #fff; border-radius: 14px; padding: 22px 24px;
+  box-shadow: 0 24px 60px rgba(20, 40, 80, .28);
+}
+/* Titre et icône en rouge bordeaux */
+.doublon-titre { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 18px; color: #800020; }
+.doublon-titre svg { flex-shrink: 0; }
+.doublon-intro { margin: 10px 0; font-size: 14px; color: #3a4450; }
+.doublon-liste { margin: 10px 0; padding-left: 18px; }
+.doublon-liste li { margin: 6px 0; }
+.doublon-liste a { color: #1769c0; font-weight: 600; }
+.doublon-liste .doublon-meta { color: #8a93a2; font-size: 12px; margin-left: 6px; }
+.doublon-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }

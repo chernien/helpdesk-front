@@ -1,4 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ViewChild, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { startWith } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -7,7 +9,7 @@ import { ReferenceService } from '../../../core/services/reference.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { UserAdminService } from '../../../core/services/user-admin.service';
 import {
-  ContactClient, LIBELLES_ROLE, Produit, Role, SocieteClient, User
+  ContactClient, LIBELLES_ROLE, ModuleItem, Produit, Role, SocieteClient, User
 } from '../../../core/models/models';
 import { SocieteAutocompleteComponent } from '../../../shared/societe-autocomplete.component';
 
@@ -56,9 +58,27 @@ export class UtilisateurFormComponent {
   readonly role = signal<Role | null>(null);
   readonly produits = signal<Produit[]>([]);
   readonly produitsChoisis = signal<Set<number>>(new Set());
-  readonly societe = signal<SocieteClient | null>(null);
+  /** Client : une ou plusieurs sociétés rattachées (la 1re = principale). */
+  readonly societes = signal<SocieteClient[]>([]);
+  /** Société dont les contacts servent au pré-remplissage (la dernière ajoutée). */
+  readonly societeContact = signal<SocieteClient | null>(null);
+  @ViewChild(SocieteAutocompleteComponent) private autocompleteSociete?: SocieteAutocompleteComponent;
   readonly contacts = signal<ContactClient[]>([]);
   readonly chargementContacts = signal(false);
+  /** Client administrateur de sa société : il voit les tickets de tous les membres (sinon, seulement les siens). */
+  readonly adminSociete = signal(false);
+  /** « Profil Admin helpdesk » coché sur son contact dans Divalto (T2.U_FLAG_ADMIN = 2), pour l'une de ses sociétés. */
+  readonly adminDivalto = signal(false);
+
+  // Client : produits + modules affectés (niveau client) + ajout inline.
+  readonly modules = signal<ModuleItem[]>([]);
+  readonly modulesClient = signal<string[]>([]);
+  readonly nouveauModule = signal('');
+  readonly ajoutModuleOuvert = signal(false);
+
+  readonly produitsClient = signal<string[]>([]);
+  readonly nouveauProduit = signal('');
+  readonly ajoutProduitOuvert = signal(false);
 
   readonly modeEdition = computed(() => this.userId() !== null);
   readonly estMoi = computed(() => this.userId() === this.auth.user()?.id);
@@ -75,8 +95,27 @@ export class UtilisateurFormComponent {
 
   get f() { return this.form.controls; }
 
+  /** Email du compte en cours (suivi en direct pour filtrer les contacts). */
+  private readonly emailCourant = toSignal(
+    this.form.controls.email.valueChanges.pipe(startWith(this.form.controls.email.value)),
+    { initialValue: this.form.controls.email.value });
+
+  /**
+   * Contacts proposés pour le pré-remplissage. Tant qu'aucun email n'est choisi, toute la liste
+   * de la société. Dès qu'un contact est retenu (email fixé), on ne propose plus que cette même
+   * adresse dans les autres sociétés — c'est la même personne, rattachée à plusieurs sociétés.
+   */
+  readonly contactsAffiches = computed(() => {
+    const email = (this.emailCourant() ?? '').trim().toLowerCase();
+    const tous = this.contacts();
+    if (!email) return tous;
+    const memePersonne = tous.filter(c => c.email.trim().toLowerCase() === email);
+    return memePersonne.length ? memePersonne : tous;
+  });
+
   constructor() {
     this.referenceService.produits().subscribe({ next: p => this.produits.set(p), error: () => {} });
+    this.referenceService.modules().subscribe({ next: m => this.modules.set(m), error: () => {} });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -100,10 +139,17 @@ export class UtilisateurFormComponent {
           enabled: user.enabled !== false
         });
         this.produitsChoisis.set(new Set(user.produits.map(p => p.productId)));
-        if (user.clientTiers) {
-          const societe = { tiers: user.clientTiers, nom: user.societeNom ?? user.clientTiers };
-          this.societe.set(societe);
-          this.chargerContacts(societe.tiers);
+        this.modulesClient.set([...(user.modules ?? [])]);
+        this.produitsClient.set((user.perimetre ?? []).map(l => l.produit));
+        const societes = (user.societes && user.societes.length)
+          ? user.societes
+          : (user.clientTiers ? [{ tiers: user.clientTiers, nom: user.societeNom ?? user.clientTiers }] : []);
+        this.societes.set(societes);
+        this.adminSociete.set(!!user.adminSociete);
+        if (user.role === 'ROLE_CLIENT' && user.username) this.lireAdminDivalto(user.username, false);
+        if (societes.length) {
+          this.societeContact.set(societes[0]);
+          this.chargerContacts(societes[0].tiers);
         }
         this.chargement.set(false);
       },
@@ -122,11 +168,28 @@ export class UtilisateurFormComponent {
 
   // ---------- Client : societe et contact Divalto ----------
 
+  /** Ajoute une société à la liste du client (sélection via l'autocomplétion). */
   surSociete(societe: SocieteClient | null) {
-    this.societe.set(societe);
+    if (!societe) return;
+    if (this.societes().every(s => s.tiers !== societe.tiers))
+      this.societes.update(liste => [...liste, societe]);
     this.societeInvalide.set(false);
+    // Les contacts affichés pour le pré-remplissage suivent la dernière société ajoutée.
+    this.societeContact.set(societe);
     this.contacts.set([]);
-    if (societe) this.chargerContacts(societe.tiers);
+    this.chargerContacts(societe.tiers);
+    // Vide le champ pour pouvoir enchaîner une autre société.
+    queueMicrotask(() => this.autocompleteSociete?.vider());
+  }
+
+  retirerSociete(tiers: string) {
+    this.societes.update(liste => liste.filter(s => s.tiers !== tiers));
+    if (this.societeContact()?.tiers === tiers) {
+      const premiere = this.societes()[0] ?? null;
+      this.societeContact.set(premiere);
+      this.contacts.set([]);
+      if (premiere) this.chargerContacts(premiere.tiers);
+    }
   }
 
   private chargerContacts(tiers: string) {
@@ -147,6 +210,20 @@ export class UtilisateurFormComponent {
       nom: contact.nom ?? this.form.value.nom ?? ''
     });
     this.form.controls.email.markAsTouched();
+    // Nouveau compte : case pré-cochée si « Profil Admin helpdesk » est coché sur ce contact dans Divalto.
+    this.lireAdminDivalto(contact.email, !this.modeEdition());
+  }
+
+  /** Lit « Profil Admin helpdesk » dans Divalto pour ces sociétés ; précoche la case si demandé (nouveau compte). */
+  private lireAdminDivalto(email: string, precocher: boolean) {
+    this.referenceService.societesAdmin(email).subscribe({
+      next: tiers => {
+        const admin = this.societes().some(s => tiers.includes(s.tiers));
+        this.adminDivalto.set(admin);
+        if (precocher) this.adminSociete.set(admin);
+      },
+      error: () => {}
+    });
   }
 
   libelleContact(c: ContactClient): string {
@@ -161,6 +238,79 @@ export class UtilisateurFormComponent {
     set.has(id) ? set.delete(id) : set.add(id);
     this.produitsChoisis.set(set);
     this.produitsInvalides.set(false);
+  }
+
+  // ---------- Client : modules affectés (niveau client, sélection multiple) ----------
+
+  /** Coche/décoche un module pour ce client. */
+  basculerModuleClient(nom: string) {
+    this.modulesClient.update(mods =>
+      mods.includes(nom) ? mods.filter(m => m !== nom) : [...mods, nom]);
+  }
+  moduleClientCoche(nom: string): boolean {
+    return this.modulesClient().includes(nom);
+  }
+
+  fermerAjoutModule() {
+    this.ajoutModuleOuvert.set(false);
+    this.nouveauModule.set('');
+  }
+
+  /** Crée un module (liste globale), l'affecte aussitôt à ce client et referme la saisie. */
+  ajouterModule() {
+    const nom = this.nouveauModule().trim();
+    if (!nom) return;
+    this.referenceService.ajouterModule(nom).subscribe({
+      next: m => {
+        if (!this.modules().some(x => x.id === m.id))
+          this.modules.update(list => [...list, m].sort((a, b) => a.nom.localeCompare(b.nom)));
+        if (!this.modulesClient().includes(m.nom)) this.basculerModuleClient(m.nom);
+        this.fermerAjoutModule();
+      },
+      error: e => this.toast.erreur('Module non ajouté', e.error?.message ?? 'Réessayez.')
+    });
+  }
+
+  // ---------- Client : produits affectés (niveau client, sélection multiple) ----------
+
+  /** Coche/décoche un produit pour ce client. */
+  basculerProduitClient(nom: string) {
+    this.produitsClient.update(prods =>
+      prods.includes(nom) ? prods.filter(p => p !== nom) : [...prods, nom]);
+  }
+  produitClientCoche(nom: string): boolean {
+    return this.produitsClient().includes(nom);
+  }
+
+  fermerAjoutProduit() {
+    this.ajoutProduitOuvert.set(false);
+    this.nouveauProduit.set('');
+  }
+
+  /** Crée un produit (catalogue ERP), l'affecte aussitôt à ce client et referme la saisie. */
+  ajouterProduit() {
+    const nom = this.nouveauProduit().trim();
+    if (!nom) return;
+    this.referenceService.ajouterProduit(nom).subscribe({
+      next: p => {
+        if (!this.produits().some(x => x.productId === p.productId))
+          this.produits.update(list => [...list, p].sort((a, b) => a.nom.localeCompare(b.nom)));
+        if (!this.produitsClient().includes(p.nom)) this.basculerProduitClient(p.nom);
+        this.fermerAjoutProduit();
+      },
+      error: e => this.toast.erreur('Produit non ajouté', e.error?.message ?? 'Réessayez.')
+    });
+  }
+
+  /** Supprime un produit du catalogue (interdit s'il est affecté à des utilisateurs). */
+  supprimerProduit(p: Produit) {
+    this.referenceService.supprimerProduit(p.productId).subscribe({
+      next: () => {
+        this.produits.update(list => list.filter(x => x.productId !== p.productId));
+        this.produitsClient.update(prods => prods.filter(n => n !== p.nom));
+      },
+      error: e => this.toast.erreur('Suppression impossible', e.error?.message ?? 'Réessayez.')
+    });
   }
 
   // ---------- Mot de passe ----------
@@ -192,7 +342,7 @@ export class UtilisateurFormComponent {
 
     this.form.markAllAsTouched();
     const produitsOk = (role !== 'ROLE_USER' && role !== 'ROLE_DEV') || this.produitsChoisis().size > 0;
-    const societeOk = role !== 'ROLE_CLIENT' || this.societe() !== null;
+    const societeOk = role !== 'ROLE_CLIENT' || this.societes().length > 0;
     this.produitsInvalides.set(!produitsOk);
     this.societeInvalide.set(!societeOk);
 
@@ -204,16 +354,21 @@ export class UtilisateurFormComponent {
     this.envoi.set(true);
     this.erreur.set(null);
     const v = this.form.getRawValue();
+
     const commun = {
       email: v.email.trim(),
       prenom: v.prenom.trim(),
       nom: v.nom.trim(),
-      clientTiers: role === 'ROLE_CLIENT' ? this.societe()!.tiers : null,
-      produitIds: role === 'ROLE_USER' || role === 'ROLE_DEV' ? [...this.produitsChoisis()] : []
+      clientTiers: role === 'ROLE_CLIENT' ? (this.societes()[0]?.tiers ?? null) : null,
+      societesTiers: role === 'ROLE_CLIENT' ? this.societes().map(s => s.tiers) : [],
+      adminSociete: role === 'ROLE_CLIENT' && this.adminSociete(),
+      produitIds: role === 'ROLE_USER' || role === 'ROLE_DEV' ? [...this.produitsChoisis()] : [],
+      perimetre: role === 'ROLE_CLIENT' ? this.produitsClient().map(nom => ({ produit: nom, version: null })) : [],
+      modules: role === 'ROLE_CLIENT' ? this.modulesClient() : []
     };
 
     const requete = this.modeEdition()
-      ? this.userAdmin.modifier(this.userId()!, { ...commun, enabled: v.enabled, password: v.password || null })
+      ? this.userAdmin.modifier(this.userId()!, { ...commun, role, enabled: v.enabled, password: v.password || null })
       : this.userAdmin.creer({ ...commun, role, password: v.password });
 
     requete.subscribe({

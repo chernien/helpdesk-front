@@ -175,6 +175,72 @@
 }
 .spacer { flex: 1; }
 
+/* Sélecteur de société (client multi-sociétés) */
+.societe-switch { position: relative; margin: 0 var(--sp-3) 0 var(--sp-2); }
+
+/* ---- Bouton déclencheur (pilule pro : badge initiales + libellé + nom + chevron) ---- */
+.societe-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  max-width: 270px; height: 44px; padding: 0 12px 0 7px;
+  border: 1px solid #e4e9f2; border-radius: 14px;
+  background: var(--surface, #fff); color: var(--text, #1f2a44);
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.societe-btn:hover { border-color: #c6d6ef; background: #fafbff; box-shadow: 0 4px 14px rgba(20,40,80,.06); }
+.societe-btn.ouvert { border-color: #1769c0; box-shadow: 0 0 0 3px rgba(23,105,192,.14); }
+
+.societe-btn .societe-ic {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px;
+  border-radius: 9px; background: linear-gradient(135deg, #1769c0, #0f4c93);
+  color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .02em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22);
+}
+.societe-btn .societe-txt {
+  display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; min-width: 0;
+}
+.societe-btn .societe-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: #94a1b8;
+}
+.societe-btn .societe-nom {
+  font-size: 13.5px; font-weight: 600; max-width: 170px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.societe-btn .chevron { flex: none; color: #8a97ad; transition: transform .18s ease; }
+.societe-btn.ouvert .chevron { transform: rotate(180deg); color: #1769c0; }
+
+/* ---- Menu déroulant (carte avec en-tête + options à avatar) ---- */
+.societe-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 60;
+  min-width: 268px; max-height: 340px; overflow: auto;
+  padding: 6px; background: var(--surface, #fff);
+  border: 1px solid #e6ebf3; border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(20, 40, 80, .18);
+  animation: societeMenuIn .14s ease-out both;
+}
+@keyframes societeMenuIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.societe-menu-tete {
+  padding: 8px 10px 6px; font-size: 10.5px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: #94a1b8;
+}
+.societe-opt {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 10px; border: none; border-radius: 10px; background: transparent;
+  font-size: 13.5px; color: var(--text, #1f2a44); text-align: left; cursor: pointer;
+  transition: background .12s ease;
+}
+.societe-opt:hover { background: #f2f6fc; }
+.societe-opt .opt-ic {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px;
+  border-radius: 9px; background: #eef2f7; color: #5a6880;
+  font-size: 12px; font-weight: 800; letter-spacing: .02em;
+}
+.societe-opt .opt-nom { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.societe-opt .opt-check { flex: none; color: #1769c0; }
+.societe-opt.actif { background: #eaf2fb; color: #1458a3; font-weight: 600; }
+.societe-opt.actif .opt-ic { background: linear-gradient(135deg, #1769c0, #0f4c93); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.22); }
+
 .titre-page {
   display: flex;
   align-items: baseline;
@@ -247,6 +313,48 @@
   box-shadow: 0 2px 6px rgba(220, 38, 38, .4);
   animation: popIn 300ms var(--ease-spring) both;
 }
+
+/* ---------- Messenger (discussions) ---------- */
+.messenger { position: relative; }
+.msg-btn {
+  position: relative;
+  width: 44px; height: 44px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
+  border-radius: var(--r-md);
+  color: #1f7ee8;
+  cursor: pointer;
+  transition: background var(--t-fast), transform var(--t-fast);
+}
+.msg-btn:hover { background: var(--surface-2); }
+.msg-btn:active { transform: scale(.92); }
+.msg-btn.a-msg svg { animation: bellRing 1s var(--ease-out); transform-origin: top center; }
+
+.msg-apercu {
+  font-size: 12.5px;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.msg-apercu strong { color: var(--ink-soft); font-weight: 600; }
+.msg-compte {
+  flex-shrink: 0;
+  min-width: 20px; height: 20px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  border-radius: 999px;
+  background: #1f7ee8;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.notif-ico[data-type='MESSAGE'] { background: linear-gradient(140deg, #2b9df4, #1668c7); }
 
 .profil { position: relative; }
 .profil-btn {
@@ -324,7 +432,34 @@
 .profil-menu-item.danger { color: var(--danger); }
 .profil-menu-item.danger:hover { background: var(--danger-bg); }
 
+/* Agent IA : modèle courant + alerte quota */
+.pm-txt {
+  display: flex; flex-direction: column; align-items: flex-start; flex: 1; min-width: 0;
+  padding: 6px 0; line-height: 1.3; text-align: left; white-space: nowrap;
+}
+.pm-txt small {
+  max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis;
+  font-size: 12px; font-weight: 500; color: var(--muted); font-family: var(--mono);
+}
+.pm-alerte {
+  flex-shrink: 0;
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 700;
+  background: var(--warning-bg); color: var(--warning);
+}
+.avatar { position: relative; }
+.avatar-alerte {
+  position: absolute; top: -1px; right: -1px;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 2px #fff;
+}
+
 .contenu { flex: 1; padding: var(--sp-5) var(--sp-6); }
+/* Boite mail : le composant porte son propre fond et ses marges */
+.contenu.plein-ecran { padding: 0; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1024px) {

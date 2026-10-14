@@ -1,4 +1,4 @@
-:host { display: block; animation: pageIn 380ms var(--ease-out) both; }
+:host { display: block; animation: pageIn 380ms var(--ease-out) backwards; }
 
 .fil {
   display: flex;
@@ -220,4 +220,117 @@
 @media (max-width: 640px) {
   .actions { flex-direction: column-reverse; }
   .actions .btn { width: 100%; }
+}
+
+/* ===== Périmètre client + modules ===== */
+.bloc-sous-titre { margin: 20px 0 4px; font-size: 14px; font-weight: 700; color: var(--bx-texte, #1a2331); }
+.perimetre { display: flex; flex-direction: column; gap: 14px; }
+.perimetre-bloc {
+  border: 1px solid #e3e8ef; border-radius: 10px; padding: 14px; background: #fbfcfe;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.perimetre-tete { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+.perimetre-tete .input, .perimetre-tete .select { width: 100%; }
+.perimetre-tete .btn-icone { margin-bottom: 2px; }
+.modules-choix { display: flex; flex-wrap: wrap; gap: 8px; }
+.module-opt {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border: 1px solid #d0d8e4; border-radius: 999px;
+  font-size: 13px; color: #3a4450; cursor: pointer; background: #fff; user-select: none;
+}
+.module-opt input { accent-color: #1769c0; }
+.module-opt.actif { background: #eaf2fb; border-color: #9cc4ec; color: #1458a3; font-weight: 600; }
+
+/* Bouton "+" pour créer et affecter un nouveau module */
+.module-plus {
+  display: inline-grid; place-items: center; width: 34px; height: 34px;
+  border: 1px dashed #9cc4ec; border-radius: 999px; background: #f7f9fc;
+  color: #1769c0; font-size: 20px; line-height: 1; cursor: pointer;
+}
+.module-plus:hover { background: #eaf2fb; }
+.module-ajout-inline {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 6px; border: 1px solid #9cc4ec; border-radius: 999px; background: #fff;
+}
+.input-inline {
+  border: none; outline: none; font-size: 13px; color: #2a333f;
+  padding: 4px 8px; min-width: 130px; background: transparent;
+}
+.btn-inline {
+  display: grid; place-items: center; width: 24px; height: 24px;
+  border: none; border-radius: 50%; background: #eef2f7; color: #5a6472;
+  cursor: pointer; line-height: 1; font-size: 14px;
+}
+.btn-inline:hover { background: #d6deea; }
+.btn-inline.ok { background: #1769c0; color: #fff; }
+.btn-inline.ok:hover { background: #1458a3; }
+
+/* Pastille produit = case à cocher + bouton de suppression du catalogue */
+.pill-suppr-wrap {
+  display: inline-flex; align-items: center;
+  border: 1px solid #d0d8e4; border-radius: 999px; background: #fff; overflow: hidden;
+}
+.pill-suppr-wrap.actif { background: #eaf2fb; border-color: #9cc4ec; }
+.module-opt.sans-bord { border: none; border-radius: 0; background: transparent; padding-right: 4px; }
+.pill-suppr-wrap.actif .module-opt.sans-bord { color: #1458a3; font-weight: 600; }
+.pill-suppr {
+  display: grid; place-items: center; width: 20px; height: 20px; margin-right: 7px;
+  border: none; border-radius: 50%; background: #e2e8f1; color: #5a6472;
+  cursor: pointer; line-height: 1; font-size: 13px;
+}
+.pill-suppr:hover { background: #e5484d; color: #fff; }
+.btn-icone {
+  display: grid; place-items: center; width: 34px; height: 34px;
+  border: 1px solid #e3e8ef; border-radius: 8px; background: #fff; color: #e5484d; cursor: pointer;
+}
+.btn-icone:hover { background: #fdecec; }
+.btn-ajout {
+  align-self: flex-start; margin-top: 4px; padding: 8px 14px;
+  border: 1px dashed #b9c4d4; border-radius: 8px; background: #f7f9fc;
+  font-weight: 600; font-size: 13px; color: #1769c0; cursor: pointer;
+}
+.btn-ajout:hover { background: #eef4fb; }
+.modules-admin { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 12px; }
+.module-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 6px 4px 12px; border-radius: 999px;
+  background: #eef2f7; font-size: 13px; color: #2a333f;
+}
+.module-chip button {
+  width: 18px; height: 18px; border: none; border-radius: 50%;
+  background: #d6deea; color: #5a6472; cursor: pointer; line-height: 1; font-size: 13px;
+}
+.module-chip button:hover { background: #e5484d; color: #fff; }
+
+/* Sociétés choisies (client multi-sociétés) */
+.societes-choisies { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.societe-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 7px 5px 12px; border-radius: 999px;
+  background: #eaf2fb; border: 1px solid #c7ddf4; font-size: 13px; color: #1458a3; font-weight: 600;
+}
+.societe-chip .principale {
+  font-style: normal; font-weight: 600; font-size: 11px; text-transform: uppercase;
+  letter-spacing: .02em; color: #1769c0; background: #d6e8fb; padding: 1px 7px; border-radius: 999px;
+}
+.societe-chip button {
+  width: 18px; height: 18px; border: none; border-radius: 50%;
+  background: #c7ddf4; color: #1458a3; cursor: pointer; line-height: 1; font-size: 13px;
+}
+.societe-chip button:hover { background: #e5484d; color: #fff; }
+/* Administrateur de la société (pré-coché depuis Divalto « Profil Admin helpdesk ») */
+.admin-societe { margin-top: 18px; }
+.admin-societe .divalto { color: #1458a3; font-weight: 600; }
+.admin-coche {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 7px 12px; border: 1px solid #d5dde6; border-radius: 8px; background: #fff;
+  font-size: 14px; font-weight: 600; color: #1f2937;
+}
+.admin-coche:has(input:checked) { border-color: #1769c0; background: #eaf2fb; color: #1458a3; }
+.admin-coche input { width: 16px; height: 16px; margin: 0; accent-color: #1769c0; }
+
+.module-ajout { display: flex; gap: 10px; align-items: center; }
+.module-ajout .input { max-width: 260px; }
+@media (max-width: 680px) {
+  .perimetre-tete { grid-template-columns: 1fr auto; }
 }

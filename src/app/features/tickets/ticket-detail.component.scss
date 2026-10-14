@@ -1,4 +1,4 @@
-:host { display: block; animation: pageIn 380ms var(--ease-out) both; }
+:host { display: block; animation: pageIn 380ms var(--ease-out) backwards; }
 
 .fil {
   display: flex;
@@ -506,3 +506,37 @@
 /* En-tete : actions administrateur */
 .tete-boutons { display: flex; gap: var(--sp-2); }
 .tete-boutons .btn { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---------- Discussion + e-mail (barre d'actions de communication) ---------- */
+.actions-comm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px 0 16px;
+}
+.btn-comm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  font: 600 14px inherit;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--e1);
+  transition: transform var(--t-fast), box-shadow var(--t-base), filter var(--t-fast);
+}
+.btn-comm:hover { transform: translateY(-1px); box-shadow: var(--e2); filter: saturate(1.08); }
+.btn-comm:active { transform: translateY(0); }
+.btn-comm.discussion { background: linear-gradient(135deg, #2b9df4, #1f7ee8); }
+.btn-comm.email { background: linear-gradient(135deg, #2ec9a0, #13a67c); }
+
+/* Champ de saisie du n° de ticket cible (fusion de doublons) */
+.champ-fusion {
+  width: 100%; margin: 6px 0 4px; padding: 10px 12px;
+  border: 1px solid var(--border, #d7deea); border-radius: 10px;
+  font-size: 15px; box-sizing: border-box;
+}
+.champ-fusion:focus { outline: none; border-color: #1769c0; box-shadow: 0 0 0 3px rgba(23,105,192,.15); }

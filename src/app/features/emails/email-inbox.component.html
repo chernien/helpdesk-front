@@ -1,0 +1,349 @@
+<div class="ib-page">
+
+  @if (afficherConnexion()) {
+    <!-- Aucune boîte connectée : écran d'intégration plein (look Divalto / Bitrix24). -->
+    <div class="ib-integration">
+      <hd-mailbox-settings-slider [inline]="true" [statut]="statutBoite()"
+                                  (change)="surChangementBoite()" (fermer)="voirTickets()" />
+    </div>
+  } @else {
+
+  <!-- ══ Ligne du haut : Nouveau message · filtre dossier + recherche · actualiser ══ -->
+  <div class="ib-haut">
+    <button class="bx-btn bx-btn-bleu ib-nouveau" type="button" (click)="redaction.set(true)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" /></svg>
+      Nouveau message
+    </button>
+
+    <div class="ib-recherche">
+      <div class="bx-menu-zone ib-puce-zone">
+        <span class="ib-puce">
+          <button type="button" class="ib-puce-btn" (click)="menuDossier.set(!menuDossier())"
+                  aria-haspopup="menu" [attr.aria-expanded]="menuDossier()" [title]="'Dossier : ' + nomDossier()">
+            Dossier : {{ nomDossier() }}
+          </button>
+          @if (!estBoiteReception()) {
+            <button type="button" class="ib-puce-x" (click)="choisirDossier('inbox')"
+                    aria-label="Revenir à la boîte de réception" title="Revenir à la boîte de réception">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" /></svg>
+            </button>
+          }
+        </span>
+        @if (menuDossier()) {
+          <div class="bx-menu gauche" role="menu">
+            <div class="bx-menu-titre">Dossiers</div>
+            @for (d of dossiers(); track d.id) {
+              <button class="bx-menu-item" role="menuitem" type="button" (click)="choisirDossier(d.id)">
+                {{ d.nom }}
+                @if (d.nonLus) { <span class="compte">{{ d.nonLus }}</span> }
+              </button>
+            } @empty {
+              <button class="bx-menu-item" role="menuitem" type="button" (click)="choisirDossier('inbox')">Boîte de réception</button>
+            }
+          </div>
+        }
+      </div>
+
+      <input class="ib-saisie" type="search" placeholder="Rechercher un e-mail…" aria-label="Rechercher un e-mail"
+             [value]="recherche()" (input)="surRecherche($any($event.target).value)" />
+      <svg class="ib-loupe" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" /><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+      @if (recherche()) {
+        <button type="button" class="ib-effacer" (click)="surRecherche('')" aria-label="Effacer la recherche">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></svg>
+        </button>
+      }
+    </div>
+
+    <button class="ib-verre ib-boite" type="button" (click)="reglagesBoite.set(true)"
+            [title]="statutBoite()?.connectee ? 'Ma boîte : ' + statutBoite()!.email : 'Connecter ma boîte'">
+      @if (statutBoite()?.connectee) { <span class="ib-boite-point" aria-hidden="true"></span> }
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2" /><path d="M3.5 7l8.5 6 8.5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+      <span class="ib-boite-txt">{{ statutBoite()?.connectee ? statutBoite()!.email : 'Connecter ma boîte' }}</span>
+    </button>
+
+    @if (agentStatut()?.disponible && statutBoite()?.connectee) {
+      <button class="ib-verre ib-agent" type="button" [class.on]="agentStatut()?.actif && !agentStatut()?.blocage"
+              [class.pause]="agentStatut()?.actif && agentStatut()?.blocage"
+              (click)="basculerAgent()" [disabled]="agentEnCours()" [title]="agentInfo()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="5" y="8" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="2" />
+          <path d="M12 8V4M9 13h.01M15 13h.01M3 13v2M21 13v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <span>Agent&nbsp;{{ agentStatut()?.actif ? (agentStatut()?.blocage ? 'PAUSE' : 'ON') : 'OFF' }}</span>
+      </button>
+
+      <button class="ib-verre ib-agent ib-modele" type="button" [class.pause]="agentStatut()?.actif && agentStatut()?.blocage"
+              (click)="choisirModele()"
+              [title]="'Modèle IA de l’agent : ' + libelleModele(agentStatut()?.modele) + '. Cliquer pour changer de modèle.'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="2" />
+          <path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <span class="ib-modele-txt">{{ modeleCourt() }}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+
+    }
+
+    <button class="ib-verre ib-actualiser" type="button" (click)="actualiser()" title="Actualiser la boîte">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v5h-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      <span>Actualiser</span>
+    </button>
+  </div>
+
+  <!-- ══ Onglet dossiers + compteur de non lus ══ -->
+  <div class="ib-ligne2">
+    <button class="ib-onglet" type="button" [class.actif]="panneauDossiers()" (click)="basculerPanneauDossiers()"
+            [attr.aria-pressed]="panneauDossiers()" title="Dossiers" aria-label="Afficher les dossiers">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 7.5a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2h-13a2 2 0 01-2-2v-10z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" /></svg>
+    </button>
+    <button class="ib-compteur" type="button" [class.actif]="filtreNonLus()" (click)="basculerNonLus()"
+            [attr.aria-pressed]="filtreNonLus()"
+            [title]="filtreNonLus() ? 'Afficher tous les e-mails' : 'Afficher seulement les non lus'">
+      E-mails :
+      <span class="ib-badge">{{ nonLus() > 999 ? '999+' : nonLus() }}</span>
+      Non lu
+      @if (filtreNonLus()) {
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" /></svg>
+      }
+    </button>
+  </div>
+
+  <div class="ib-cadre">
+
+    <!-- ══ Panneau des dossiers (cible du glisser-deposer) ══ -->
+    @if (panneauDossiers()) {
+      <nav class="bx-carte ib-dossiers" aria-label="Dossiers">
+        <div class="ib-dossiers-titre">Dossiers</div>
+        @for (d of dossiers(); track d.id) {
+          <button type="button" class="ib-dossier"
+                  [class.actif]="d.id === dossierActif()?.id"
+                  [class.cible]="cibleDepot() === d.id"
+                  (click)="choisirDossier(d.id)"
+                  (dragover)="surSurvolDossier($event, d)"
+                  (dragleave)="cibleDepot.set(null)"
+                  (drop)="surDepot($event, d)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              @switch (d.cle) {
+                @case ('inbox') { <path d="M3.5 13.5l2.2-7.2A2 2 0 017.6 5h8.8a2 2 0 011.9 1.3l2.2 7.2V18a2 2 0 01-2 2h-13a2 2 0 01-2-2v-4.5z M3.5 13.5h5l1.5 2.5h4l1.5-2.5h5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /> }
+                @case ('sentitems') { <path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /> }
+                @case ('drafts') { <path d="M4 20h4L19 9a2.8 2.8 0 00-4-4L4 16v4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /> }
+                @case ('junkemail') { <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8" /><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.8" /> }
+                @case ('deleteditems') { <path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /> }
+                @case ('archive') { <path d="M3.5 5h17v4h-17zM5 9v10h14V9M10 13h4" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" /> }
+                @default { <path d="M3.5 7.5a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2h-13a2 2 0 01-2-2v-10z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /> }
+              }
+            </svg>
+            <span class="ib-dossier-nom">{{ d.nom }}</span>
+            @if (d.nonLus) { <span class="ib-dossier-nb">{{ d.nonLus }}</span> }
+          </button>
+        } @empty {
+          <p class="ib-dossiers-vide">Chargement des dossiers…</p>
+        }
+      </nav>
+    }
+
+    <div class="ib-principal">
+
+      <!-- ══ Barre d'actions groupees ══ -->
+      <div class="bx-carte ib-outils">
+        <label class="ib-case">
+          <input type="checkbox" [checked]="toutCoche()" [indeterminate]="nbSelection() > 0 && !toutCoche()"
+                 [disabled]="!emails().length" (change)="toutCocher()" aria-label="Tout sélectionner" />
+        </label>
+        <span class="ib-selection" [class.actif]="nbSelection() > 0">
+          Sélectionné : {{ nbSelection() }}
+          <button type="button" class="ib-selection-x" [disabled]="!nbSelection()" (click)="viderSelection()" aria-label="Vider la sélection">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" /></svg>
+          </button>
+        </span>
+        <span class="ib-sep" aria-hidden="true"></span>
+
+        <button type="button" class="ib-outil" [disabled]="!nbSelection() || actionEnCours()" (click)="marquerSelection(true)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 10l9-6 9 6v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z M3 10l9 6 9-6" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" /></svg>
+          Lu
+        </button>
+        <button type="button" class="ib-outil" [disabled]="!nbSelection() || actionEnCours()" (click)="marquerSelection(false)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5" stroke="currentColor" stroke-width="1.9" /><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" /></svg>
+          Non lu
+        </button>
+        <div class="bx-menu-zone ib-deplacer-zone">
+          <button type="button" class="ib-outil" [disabled]="!nbSelection() || actionEnCours() || !dossiersCibles().length"
+                  (click)="menuDeplacer.set(!menuDeplacer())" aria-haspopup="menu" [attr.aria-expanded]="menuDeplacer()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 7.5a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2h-13a2 2 0 01-2-2v-10z M10 13.5h5M13 11l2.5 2.5L13 16" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" /></svg>
+            Déplacer dans le dossier
+          </button>
+          @if (menuDeplacer()) {
+            <div class="bx-menu gauche" role="menu">
+              @for (d of dossiersCibles(); track d.id) {
+                <button class="bx-menu-item" role="menuitem" type="button" (click)="deplacerSelection(d.id)">{{ d.nom }}</button>
+              }
+            </div>
+          }
+        </div>
+        <button type="button" class="ib-outil" [disabled]="!nbSelection() || actionEnCours()"
+                (click)="deplacerSelection(estSpam() ? 'inbox' : 'junkemail')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.9" /><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.9" /></svg>
+          {{ estSpam() ? 'Pas un spam' : 'Marquer comme spam' }}
+        </button>
+        @if (!estCorbeille()) {
+          <button type="button" class="ib-outil" [disabled]="!nbSelection() || actionEnCours()" (click)="deplacerSelection('deleteditems')">
+            <svg width="14" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            Supprimer
+          </button>
+        }
+        @if (actionEnCours()) { <span class="bx-spinner ib-mini-spinner" aria-label="Action en cours"></span> }
+      </div>
+
+      <!-- ══ Liste des e-mails ══ -->
+      <div class="bx-carte ib-liste">
+        @if (chargement()) {
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="ib-squelette" aria-hidden="true">
+              <span class="sq-rond"></span><span class="sq-barre court"></span><span class="sq-barre"></span>
+            </div>
+          }
+        } @else if (erreur()) {
+          <div class="ib-vide">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.4" /><path d="M12 8v4.5M12 16v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+            <strong>Boîte mail indisponible</strong>
+            <span>{{ erreur() }}</span>
+            <button type="button" class="bx-btn bx-btn-blanc" (click)="actualiser()">Réessayer</button>
+          </div>
+        } @else if (!emails().length) {
+          <div class="ib-vide">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.2" /><path d="M3 8l9 6 9-6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" /></svg>
+            @if (recherche()) {
+              <strong>Aucun résultat</strong>
+              <span>Aucun e-mail ne correspond à « {{ recherche() }} » dans « {{ nomDossier() }} ».</span>
+            } @else if (filtreNonLus()) {
+              <strong>Tout est lu</strong>
+              <span>Aucun e-mail non lu dans « {{ nomDossier() }} ».</span>
+            } @else {
+              <strong>Dossier vide</strong>
+              <span>« {{ nomDossier() }} » ne contient aucun e-mail.</span>
+            }
+          </div>
+        } @else {
+          <ul class="ib-lignes">
+            @for (email of emails(); track email.id) {
+              <li class="ib-ligne"
+                  [class.non-lu]="!email.estLu"
+                  [class.ouverte]="ouverture()?.resume?.id === email.id"
+                  [class.cochee]="selection().has(email.id)"
+                  [class.glissee]="glisse()?.includes(email.id)"
+                  draggable="true"
+                  (dragstart)="surDebutGlisse($event, email)"
+                  (dragend)="surFinGlisse()"
+                  (click)="ouvrir(email)"
+                  (keydown.enter)="surEntree($event, email)"
+                  tabindex="0">
+                <label class="ib-case" (click)="$event.stopPropagation()">
+                  <input type="checkbox" [checked]="selection().has(email.id)" (change)="cocher(email.id)"
+                         [attr.aria-label]="'Sélectionner : ' + (email.objet || 'e-mail sans objet')" />
+                </label>
+                <span class="ib-poignee" title="Glisser vers un dossier" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 8h14M5 12h14M5 16h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+                </span>
+                <span class="ib-point" aria-hidden="true"></span>
+                <span class="bx-avatar" [style.background]="couleurAvatar(email.de || email.deEmail)" aria-hidden="true">
+                  {{ initiale(email.de || email.deEmail) }}
+                </span>
+                <span class="ib-de" [title]="email.deEmail || ''">{{ email.de || email.deEmail || '(Inconnu)' }}</span>
+                <span class="ib-objet">
+                  <span class="ib-objet-txt">{{ email.objet || '(Sans objet)' }}</span>
+                  @if (email.apercu) { <span class="ib-apercu">{{ email.apercu }}</span> }
+                </span>
+                @if (email.hasAttachments) {
+                  <svg class="ib-trombone" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-label="Pièce jointe"><path d="M20 11.5l-7.8 7.8a5 5 0 01-7-7L13 4.5a3.3 3.3 0 014.7 4.7L10 16.9a1.7 1.7 0 01-2.4-2.4l7.1-7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                }
+                <span class="ib-heure">{{ formatHeure(email.date) }}</span>
+
+                <!-- Pastilles d'action (facon CRM / Tache / Discuter…) -->
+                <span class="ib-pastilles" (click)="$event.stopPropagation()">
+                  @if (email.ticketId) {
+                    <button type="button" class="bx-pastille lie" (click)="voirTicket(email.ticketId)" [title]="'Ouvrir le ticket #' + email.ticketId">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V7a2 2 0 012-2h12a2 2 0 012 2v2a2.5 2.5 0 000 5v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2a2.5 2.5 0 000-5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" /></svg>
+                      Ticket #{{ email.ticketId }}
+                    </button>
+                    @if (estAdmin()) {
+                      <button type="button" class="ib-suppr-ticket" (click)="ticketASupprimer.set(email.ticketId)"
+                              [attr.aria-label]="'Supprimer le ticket ' + email.ticketId" [title]="'Supprimer le ticket #' + email.ticketId">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"
+                                stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </button>
+                    }
+                  } @else if (peutCreerTicket()) {
+                    <button type="button" class="bx-pastille" (click)="ouvrir(email, 'ticket')" title="Créer un ticket depuis cet e-mail">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9V7a2 2 0 012-2h12a2 2 0 012 2v2a2.5 2.5 0 000 5v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2a2.5 2.5 0 000-5z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" /></svg>
+                      Ticket
+                    </button>
+                  }
+                  <button type="button" class="bx-pastille secondaire" (click)="ouvrir(email, 'repondre')" title="Répondre">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 7L4 12l5 5M4 12h10a6 6 0 016 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    <span class="lbl">Répondre</span>
+                  </button>
+                  <button type="button" class="bx-pastille secondaire" (click)="ouvrir(email, 'transferer')" title="Transférer">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 7l5 5-5 5M20 12H10a6 6 0 00-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    <span class="lbl">Transférer</span>
+                  </button>
+                </span>
+              </li>
+            }
+          </ul>
+
+          @if (resteACharger()) {
+            <div class="ib-plus">
+              <button type="button" class="bx-btn bx-btn-blanc" [disabled]="chargementPlus()" (click)="chargerPlus()">
+                @if (chargementPlus()) { Chargement… } @else { Afficher plus d'e-mails }
+              </button>
+              @if (!recherche()) { <small>{{ emails().length }} sur {{ total() }}</small> }
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+  }
+</div>
+
+<!-- ══ Panneaux coulissants ══ -->
+@if (ouverture(); as o) {
+  <hd-email-detail-slider
+    [ouverture]="o"
+    [email]="emailActif()"
+    [dossiers]="dossiers()"
+    [dossier]="dossierActif()"
+    [aPrecedent]="indexActif() > 0"
+    [aSuivant]="indexActif() >= 0 && indexActif() < emails().length - 1"
+    [peutCreerTicket]="peutCreerTicket()"
+    [derriere]="!!ticketPour()"
+    (fermer)="fermerDetail()"
+    (naviguer)="naviguer($event)"
+    (creerTicket)="ticketPour.set(emailActif())"
+    (voirTicket)="voirTicket($event)"
+    (deplacer)="deplacerActif($event)"
+    (marquerNonLu)="marquerActifNonLu()" />
+}
+
+@if (ticketPour(); as mail) {
+  <hd-email-ticket-slider [email]="mail" (fermer)="ticketPour.set(null)" (cree)="surTicketCree($event)" />
+}
+
+@if (reglagesBoite()) {
+  <hd-mailbox-settings-slider [statut]="statutBoite()"
+                              (fermer)="reglagesBoite.set(false)"
+                              (change)="surChangementBoite()" />
+}
+
+@if (redaction()) {
+  <hd-email-redaction-slider (fermer)="redaction.set(false)" />
+}
+
+@if (ticketASupprimer(); as id) {
+  <hd-supprimer-ticket-dialog [ticketId]="id" (ferme)="ticketASupprimer.set(null)" (supprime)="surTicketSupprime($event)" />
+}

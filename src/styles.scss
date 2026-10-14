@@ -115,11 +115,13 @@ a:hover { text-decoration: underline; }
    ============================================================ */
 @keyframes pageIn {
   from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  /* `none` (et non translateY(0)) : sinon le transform résiduel (fill-mode both) ferait du
+     conteneur animé le bloc de référence des éléments position:fixed (modals hors écran). */
+  to   { opacity: 1; transform: none; }
 }
 @keyframes riseIn {
   from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 @keyframes popIn {
   from { opacity: 0; transform: scale(.94); }
@@ -189,11 +191,11 @@ a:hover { text-decoration: underline; }
 .btn-primary {
   background: linear-gradient(180deg, var(--brand-400), var(--brand-600));
   color: #fff;
-  box-shadow: var(--e-brand), inset 0 1px 0 rgba(255, 255, 255, .25);
+  box-shadow: none;
 }
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: var(--e-brand-lg), inset 0 1px 0 rgba(255, 255, 255, .25);
+  box-shadow: none;
   filter: saturate(1.08);
 }
 
@@ -201,17 +203,17 @@ a:hover { text-decoration: underline; }
   background: var(--surface);
   color: var(--ink-soft);
   border-color: var(--border-strong);
-  box-shadow: var(--e1);
+  box-shadow: none;
 }
 .btn-ghost:hover:not(:disabled) {
   background: var(--surface-2);
   border-color: var(--muted-soft);
   transform: translateY(-1px);
-  box-shadow: var(--e2);
+  box-shadow: none;
 }
 
-.btn-danger { background: var(--danger); color: #fff; box-shadow: var(--e1); }
-.btn-danger:hover:not(:disabled) { background: #b91c1c; box-shadow: var(--e2); }
+.btn-danger { background: var(--danger); color: #fff; box-shadow: none; }
+.btn-danger:hover:not(:disabled) { background: #b91c1c; box-shadow: none; }
 
 .btn-sm { min-height: 36px; padding: 0 var(--sp-3); font-size: 14px; }
 
@@ -417,3 +419,6 @@ a:hover { text-decoration: underline; }
 [data-etat='En attente de validation'] { --tint: var(--warning); --tint-bg: var(--warning-bg); }
 [data-etat='Clôturé']                  { --tint: var(--success); --tint-bg: var(--success-bg); }
 [data-etat='Annulé']                   { --tint: #64748b;        --tint-bg: #f1f5f9; }
+
+/* Boite mail facon Divalto / Bitrix24 (panneaux coulissants, cartes, pastilles) */
+@import './app/features/emails/email-slider';

@@ -35,6 +35,10 @@
                 <path d="M12 3l8 4.2v9.6L12 21l-8-4.2V7.2L12 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
                 <path d="M4 7.2l8 4.3 8-4.3M12 11.5V21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
               }
+              @case ('email') {
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8" />
+                <path d="M3 8l9 6 9-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              }
             }
           </svg>
           <span class="nav-libelle">{{ lien.libelle }}</span>
@@ -75,6 +79,65 @@
       </div>
 
       <div class="spacer"></div>
+
+      <div class="messenger" #zoneMessenger>
+        <button class="msg-btn" [class.a-msg]="notifications.messagesNonLus() > 0"
+                (click)="basculerMessenger()"
+                aria-haspopup="dialog" [attr.aria-expanded]="panneauMessenger()"
+                [attr.aria-label]="'Messagerie, ' + notifications.messagesNonLus() + ' message(s) non lu(s)'">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2.6c-5.4 0-9.6 4-9.6 9.2 0 2.9 1.4 5.5 3.6 7.2v3.4l3.3-1.8c.9.2 1.8.4 2.7.4 5.4 0 9.6-4 9.6-9.2S17.4 2.6 12 2.6z"
+                  fill="currentColor" />
+            <path d="M6.8 14.3l2.9-3 2.4 1.6 2.6-1.8-2.7 3 2.3 1.6z" fill="#fff" />
+          </svg>
+          @if (notifications.messagesNonLus() > 0) {
+            <span class="pastille">{{ notifications.messagesNonLus() > 99 ? '99+' : notifications.messagesNonLus() }}</span>
+          }
+        </button>
+
+        @if (panneauMessenger()) {
+          <div class="panneau" role="dialog" aria-label="Messagerie">
+            <div class="panneau-tete">
+              <strong>Messagerie</strong>
+              @if (notifications.messagesNonLus() > 0) {
+                <span class="panneau-compte">{{ notifications.messagesNonLus() }} non lu{{ notifications.messagesNonLus() > 1 ? 's' : '' }}</span>
+              }
+            </div>
+
+            <div class="panneau-corps">
+              @if (!notifications.apercuMessages().length) {
+                <div class="panneau-vide">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M21 11.5a8 8 0 01-11.6 7.1L4 20l1.4-5.4A8 8 0 1121 11.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                  </svg>
+                  <strong>Aucune conversation</strong>
+                  <span>Les discussions de vos tickets apparaîtront ici.</span>
+                </div>
+              } @else {
+                <ul class="notif-liste">
+                  @for (conv of notifications.apercuMessages(); track conv.ticketId) {
+                    <li>
+                      <button type="button" class="notif" [class.non-lue]="conv.nonLus > 0" (click)="ouvrirChat(conv)">
+                        <span class="notif-ico" data-type="MESSAGE" aria-hidden="true">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8 8 0 01-11.6 7.1L4 20l1.4-5.4A8 8 0 1121 11.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg>
+                        </span>
+                        <span class="notif-txt">
+                          <span class="notif-phrase">Ticket #{{ conv.ticketId }}@if (conv.intitule) { — {{ conv.intitule }} }</span>
+                          <span class="msg-apercu"><strong>{{ conv.dernierAuteur || 'Message' }} :</strong> {{ conv.dernierMessage }}</span>
+                          <span class="notif-meta"><time>{{ tempsRelatif(conv.derniereDate) }}</time></span>
+                        </span>
+                        @if (conv.nonLus > 0) {
+                          <span class="msg-compte">{{ conv.nonLus }}</span>
+                        }
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+        }
+      </div>
 
       <div class="notifs" #zoneNotifs>
         <button class="cloche" [class.a-notif]="notifications.nonLues() > 0"
@@ -158,10 +221,49 @@
         }
       </div>
 
+      @if (afficherSocietes()) {
+        <div class="societe-switch" #zoneSociete>
+          <button type="button" class="societe-btn" [class.ouvert]="menuSociete()" (click)="basculerSociete()"
+                  aria-haspopup="listbox" [attr.aria-expanded]="menuSociete()"
+                  [attr.aria-label]="'Société active : ' + societeActive() + '. Changer de société.'">
+            <span class="societe-ic" aria-hidden="true">{{ initialesSociete(societeActive()) }}</span>
+            <span class="societe-txt">
+              <span class="societe-label">Société</span>
+              <span class="societe-nom">{{ societeActive() }}</span>
+            </span>
+            <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+
+          @if (menuSociete()) {
+            <div class="societe-menu" role="listbox" aria-label="Choisir une société">
+              <div class="societe-menu-tete">Changer de société</div>
+              @for (s of societes(); track s.tiers) {
+                <button type="button" class="societe-opt" role="option"
+                        [attr.aria-selected]="s.nom === societeActive()"
+                        [class.actif]="s.nom === societeActive()" (click)="choisirSociete(s.nom)">
+                  <span class="opt-ic" aria-hidden="true">{{ initialesSociete(s.nom) }}</span>
+                  <span class="opt-nom">{{ s.nom }}</span>
+                  @if (s.nom === societeActive()) {
+                    <svg class="opt-check" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  }
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
       <div class="profil" #zoneProfil>
         <button class="profil-btn" (click)="basculerProfil()"
                 [attr.aria-expanded]="menuProfil()" aria-haspopup="menu">
-          <span class="avatar" aria-hidden="true">{{ initiales() }}</span>
+          <span class="avatar" aria-hidden="true">
+            {{ initiales() }}
+            @if (agent.etat()?.blocage) { <span class="avatar-alerte"></span> }
+          </span>
           <span class="profil-txt">
             <strong>{{ nomAffiche() }}</strong>
             <small>{{ libelleRole() }}</small>
@@ -174,6 +276,21 @@
               <strong>{{ nomAffiche() || "—" }}</strong>
               <small>{{ user()?.username }}</small>
             </div>
+            @if (afficherModeleIa()) {
+              <button class="profil-menu-item" role="menuitem" (click)="choisirModeleIa()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="5" y="8" width="14" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8" />
+                  <path d="M12 8V4M9 13h.01M15 13h.01M3 13v2M21 13v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                </svg>
+                <span class="pm-txt">
+                  Modèle IA
+                  <small>{{ libelleModele(agent.etat()?.modele) }}</small>
+                </span>
+                @if (agent.etat()?.blocage; as b) {
+                  <span class="pm-alerte">{{ b.quota ? 'Quota' : 'En pause' }}</span>
+                }
+              </button>
+            }
             <button class="profil-menu-item danger" role="menuitem" (click)="deconnexion()">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M15 17l5-5-5-5M20 12H9M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6"
@@ -186,8 +303,17 @@
       </div>
     </header>
 
-    <main class="contenu">
+    <main class="contenu" [class.plein-ecran]="pleinEcran()">
       <router-outlet />
     </main>
   </div>
 </div>
+
+@if (chat.ouvert(); as c) {
+  <hd-ticket-chat-slider [ticketId]="c.ticketId" [intitule]="c.intitule" (fermer)="fermerChat()" />
+}
+
+<!-- Agent IA : quota atteint (popup automatique) ou bascule manuelle du modèle -->
+@if (agent.dialogue(); as d) {
+  <hd-agent-modele-dialog [blocage]="d.blocage" (ferme)="agent.fermerDialogue()" />
+}

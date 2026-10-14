@@ -24,71 +24,89 @@
     <h2 class="titre-liste">{{ titrePage() }}</h2>
     <p class="sous-titre">
       {{ total() }} ticket{{ total() > 1 ? 's' : '' }}
-      @if (filtresActifs()) { <span>· filtré</span> }
+      @if (filtreMembre().trim()) { <span> · traités par « {{ filtreMembre().trim() }} »</span> }
+      @if (libellePeriode(); as periode) { <span> · {{ periode }}</span> }
+      @if (filtresActifs() && !filtreMembre().trim() && !libellePeriode() && !filtreEquipe()) { <span> · filtré</span> }
     </p>
   </div>
+  <!-- Export des tickets cochés, sinon de tous ceux des filtres : l'utilisateur choisit PDF ou Excel -->
+  @if (estEquipe()) {
+    <div class="export-zone">
+      <button type="button" class="btn btn-ghost btn-export" (click)="menuExport.set(!menuExport())"
+              [disabled]="exportEnCours() || (!selection().size && !total())"
+              aria-haspopup="menu" [attr.aria-expanded]="menuExport()"
+              [title]="selection().size ? 'Exporter les tickets cochés' : 'Exporter tous les tickets affichés par les filtres (toutes pages)'">
+        @if (exportEnCours()) {
+          <span class="spinner" aria-hidden="true"></span> Export…
+        } @else {
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          {{ selection().size ? 'Exporter la sélection (' + selection().size + ')' : 'Exporter (' + total() + ')' }}
+          <svg class="chevron" [class.ouvert]="menuExport()" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        }
+      </button>
+      @if (menuExport()) {
+        <div class="export-menu" role="menu" aria-label="Format d'export">
+          <button type="button" role="menuitem" class="export-choix" (click)="exporter('pdf')">
+            <span class="export-ico pdf" aria-hidden="true">PDF</span>
+            <strong class="export-txt">PDF</strong>
+          </button>
+          <button type="button" role="menuitem" class="export-choix" (click)="exporter('excel')">
+            <span class="export-ico xls" aria-hidden="true">XLS</span>
+            <strong class="export-txt">Excel</strong>
+          </button>
+        </div>
+      }
+    </div>
+  }
 </div>
 
 <!-- ============ Indicateurs cliquables ============ -->
 <div class="kpis anim-2">
-  <button class="kpi t-ouvert" [class.actif]="filtreEtat() === 'Ouvert'"
-          (click)="filtrerParCarte('Ouvert')"
-          [attr.aria-pressed]="filtreEtat() === 'Ouvert'">
-    <span class="kpi-ico" aria-hidden="true">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2" />
-        <path d="M12 8v4.2l2.8 1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-      </svg>
-    </span>
-    <span class="kpi-txt">
-      <strong class="num">{{ compteurs().ouvert }}</strong>
-      <small>Ouverts</small>
-    </span>
-    <span class="kpi-fleche" aria-hidden="true">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-    </span>
-  </button>
-
-  <button class="kpi t-cours" [class.actif]="filtreEtat() === 'En cours'"
-          (click)="filtrerParCarte('En cours')"
-          [attr.aria-pressed]="filtreEtat() === 'En cours'">
-    <span class="kpi-ico" aria-hidden="true">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M5 12a7 7 0 0113.2-3.2M19 12a7 7 0 01-13.2 3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-        <path d="M18 4v5h-5M6 20v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-    </span>
-    <span class="kpi-txt">
-      <strong class="num">{{ compteurs().cours }}</strong>
-      <small>En cours</small>
-    </span>
-    <span class="kpi-fleche" aria-hidden="true">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-    </span>
-  </button>
-
-  <button class="kpi t-dev" [class.actif]="filtreEtat() === 'En développement'"
-          (click)="filtrerParCarte('En développement')"
-          [attr.aria-pressed]="filtreEtat() === 'En développement'">
-    <span class="kpi-ico" aria-hidden="true">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 5l-3 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-    </span>
-    <span class="kpi-txt">
-      <strong class="num">{{ compteurs().dev }}</strong>
-      <small>En développement</small>
-    </span>
-    <span class="kpi-fleche" aria-hidden="true">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-    </span>
-  </button>
+  @for (k of kpis; track k.etat) {
+    <button type="button" [class]="'kpi ' + k.classe" [class.actif]="filtreEtat() === k.etat"
+            (click)="filtrerParCarte(k.etat)" [attr.aria-pressed]="filtreEtat() === k.etat"
+            [title]="'Afficher les tickets « ' + k.etat + ' »'">
+      <span class="kpi-ico" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          @switch (k.icone) {
+            @case ('ouvert') {
+              <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2" />
+              <path d="M12 8v4.2l2.8 1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            }
+            @case ('cours') {
+              <path d="M5 12a7 7 0 0113.2-3.2M19 12a7 7 0 01-13.2 3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <path d="M18 4v5h-5M6 20v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            }
+            @case ('dev') {
+              <path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 5l-3 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            }
+            @case ('test') {
+              <path d="M9 3h6M10 3v6.2L5.3 17.6A2.3 2.3 0 007.3 21h9.4a2.3 2.3 0 002-3.4L14 9.2V3M7.5 15h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            }
+            @case ('attente') {
+              <path d="M7 3h10M7 21h10M17 3c0 4.5-5 6-5 9s5 4.5 5 9M7 3c0 4.5 5 6 5 9s-5 4.5-5 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            }
+            @case ('cloture') {
+              <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2" />
+              <path d="M8.3 12.3l2.5 2.5 4.9-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            }
+            @case ('annule') {
+              <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2" />
+              <path d="M6.2 6.2l11.6 11.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            }
+          }
+        </svg>
+      </span>
+      <span class="kpi-txt">
+        <strong class="num">{{ compteurs()[k.etat] || 0 }}</strong>
+        <small>{{ k.libelle }}</small>
+      </span>
+    </button>
+  }
 </div>
 
 <!-- ============ Filtres ============ -->
@@ -108,17 +126,6 @@
   </div>
 
   <div class="field-inline">
-    <label class="sr-only" for="f-etat">Filtrer par état</label>
-    <select id="f-etat" class="select" [ngModel]="filtreEtat()"
-            (ngModelChange)="filtreEtat.set($event); surFiltre()">
-      <option value="">Tous les états</option>
-      @for (etat of etats(); track etat) {
-        <option [value]="etat">{{ etat }}</option>
-      }
-    </select>
-  </div>
-
-  <div class="field-inline">
     <label class="sr-only" for="f-produit">Filtrer par produit</label>
     <select id="f-produit" class="select" [ngModel]="filtreProduit()"
             (ngModelChange)="filtreProduit.set($event); surFiltre()">
@@ -128,6 +135,67 @@
       }
     </select>
   </div>
+
+  <!-- Client administrateur de sa société : ses tickets (par défaut), ceux d'un membre de son équipe, ou toute la société -->
+  @if (auth.estClient() && equipe().length) {
+    <div class="field-inline">
+      <label class="sr-only" for="f-equipe">Voir les tickets de</label>
+      <select id="f-equipe" class="select" [ngModel]="filtreEquipe()" (ngModelChange)="surEquipe($event)">
+        <option value="">Mes tickets</option>
+        @for (m of equipe(); track m.email) {
+          <option [value]="m.email" [title]="m.email">{{ m.nom }}</option>
+        }
+        <option value="*">Toute la société</option>
+      </select>
+    </div>
+  }
+
+  <!-- Tickets à partir d'une année, d'un mois ou d'un jour (l'année d'abord, puis on affine) -->
+  <div class="champ-periode" role="group" aria-label="Tickets à partir d'une date">
+    <span class="periode-label">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" stroke-width="2" />
+        <path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      À partir de
+    </span>
+    <select class="select" aria-label="Année" [ngModel]="filtreAnnee()"
+            (ngModelChange)="definirPeriode($event, filtreMois(), filtreJour())">
+      <option [ngValue]="null">Année</option>
+      @for (a of annees; track a) { <option [ngValue]="a">{{ a }}</option> }
+    </select>
+    <select class="select" aria-label="Mois" [ngModel]="filtreMois()" [disabled]="!filtreAnnee()"
+            (ngModelChange)="definirPeriode(filtreAnnee(), $event, filtreJour())">
+      <option [ngValue]="null">Mois</option>
+      @for (m of MOIS; track m) { <option [ngValue]="$index + 1">{{ m }}</option> }
+    </select>
+    <select class="select" aria-label="Jour" [ngModel]="filtreJour()" [disabled]="!filtreMois()"
+            (ngModelChange)="definirPeriode(filtreAnnee(), filtreMois(), $event)">
+      <option [ngValue]="null">Jour</option>
+      @for (j of jours(); track j) { <option [ngValue]="j">{{ j }}</option> }
+    </select>
+  </div>
+
+  <!-- Admin : tickets traités par un membre de l'équipe (nom et/ou prénom) -->
+  @if (auth.estAdmin()) {
+    <div class="champ-membre">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.6" stroke="currentColor" stroke-width="2" />
+        <path d="M4.5 20c.9-3.7 3.9-5.6 7.5-5.6s6.6 1.9 7.5 5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        class="input"
+        list="membres-equipe"
+        placeholder="Traités par (nom, prénom)…"
+        [ngModel]="filtreMembre()"
+        (ngModelChange)="surMembre($event)"
+        aria-label="Tickets traités par un membre de l'équipe (nom et/ou prénom)" />
+      <datalist id="membres-equipe">
+        @for (nom of nomsMembres(); track nom) { <option [value]="nom"></option> }
+      </datalist>
+    </div>
+  }
 
   @if (filtresActifs()) {
     <button class="btn btn-ghost btn-sm" (click)="reinitialiser()">Réinitialiser</button>
@@ -173,9 +241,39 @@
       </div>
     </div>
   } @else {
+    @if (estEquipe()) {
+      <div class="selection-barre">
+        <label class="coche">
+          <input type="checkbox" [checked]="pageCochee()" [indeterminate]="pagePartielle()" (change)="basculerPage()" />
+          Sélectionner la page
+        </label>
+        @if (selection().size) {
+          <span class="selection-nb">{{ selection().size }} ticket{{ selection().size > 1 ? 's' : '' }} sélectionné{{ selection().size > 1 ? 's' : '' }}</span>
+          <button type="button" class="lien" (click)="viderSelection()">Effacer la sélection</button>
+        } @else {
+          <span class="selection-aide">Cochez des tickets pour n'exporter qu'eux.</span>
+        }
+      </div>
+    }
     <ul class="tickets">
       @for (ticket of tickets(); track ticket.id) {
-        <li [style.animation-delay.ms]="($index < 12 ? $index : 12) * 45">
+        <li class="tk-ligne" [class.avec-coche]="estEquipe()" [class.cochee]="selection().has(ticket.id)"
+            [style.animation-delay.ms]="($index < 12 ? $index : 12) * 45">
+          @if (estEquipe()) {
+            <label class="tk-coche" [title]="'Sélectionner le ticket #' + ticket.id">
+              <input type="checkbox" [checked]="selection().has(ticket.id)" (change)="basculerSelection(ticket.id)"
+                     [attr.aria-label]="'Sélectionner le ticket ' + ticket.id" />
+            </label>
+          }
+          @if (auth.estAdmin()) {
+            <button type="button" class="tk-suppr" (click)="aSupprimer.set(ticket)"
+                    [attr.aria-label]="'Supprimer le ticket ' + ticket.id" [title]="'Supprimer le ticket #' + ticket.id">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          }
           <a class="ticket-ombre tk-lien" [routerLink]="['/tickets', ticket.id]"
              [attr.aria-label]="'Ticket ' + ticket.id + ' : ' + (ticket.intitule || 'sans intitulé') + ', ' + (ticket.etat || 'état non défini')">
             <article class="tk ticket-v" [attr.data-etat]="ticket.etat">
@@ -239,3 +337,8 @@
     }
   }
 </section>
+
+@if (aSupprimer(); as t) {
+  <hd-supprimer-ticket-dialog [ticketId]="t.id" [intitule]="t.intitule" (ferme)="aSupprimer.set(null)"
+                              (supprime)="surSuppression()" />
+}

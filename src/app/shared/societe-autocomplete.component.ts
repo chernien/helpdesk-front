@@ -88,6 +88,15 @@ export class SocieteAutocompleteComponent {
     this.choisie.emit(societe);
   }
 
+  /** Vide le champ (utilisé par le parent pour enchaîner plusieurs sociétés). */
+  vider() {
+    this.selection.set(null);
+    this.texte.set('');
+    this.resultats.set([]);
+    this.ouvert.set(false);
+    this.actif.set(-1);
+  }
+
   effacer(champ: HTMLInputElement) {
     this.selection.set(null);
     this.texte.set('');

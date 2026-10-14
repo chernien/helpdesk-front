@@ -1,0 +1,169 @@
+/* Carte du message (facon Divalto / Bitrix24) — chrome du panneau : _email-slider.scss */
+
+.dt-mail { padding: 20px 28px 0; }
+
+.dt-chargement {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 70px 0 80px;
+  font-size: 13px;
+  color: var(--bx-gris);
+}
+
+/* ---------- Expediteur ---------- */
+.dt-entete {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 14px;
+}
+.dt-qui { flex: 1; min-width: 0; }
+.dt-de { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+.dt-de strong { font-size: 15px; font-weight: 600; color: var(--bx-texte); }
+.dt-adresse { font-size: 12.5px; color: var(--bx-gris); }
+
+.dt-dest {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+  font-size: 12.5px;
+}
+.dt-dest-lbl { color: var(--bx-gris); }
+.dt-dest-item { display: inline-flex; align-items: center; gap: 5px; color: var(--bx-lien); }
+
+.dt-date {
+  flex-shrink: 0;
+  padding-top: 2px;
+  font-size: 12px;
+  color: var(--bx-gris);
+  white-space: nowrap;
+}
+
+/* ---------- Ligne d'actions : trait de part et d'autre ---------- */
+.dt-actions {
+  display: flex;
+  align-items: center;
+  margin: 2px 0 22px;
+}
+.dt-actions::before,
+.dt-actions::after {
+  content: '';
+  flex: 1;
+  min-width: 12px;
+  height: 1px;
+  background: var(--bx-ligne);
+}
+.dt-actions::after { flex: 2; }
+.dt-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px;
+  border: none;
+  background: none;
+  font-family: var(--bx-police);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--bx-gris);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 150ms;
+}
+.dt-actions button + button { border-left: 1px solid #e3e6e8; }
+.dt-actions button:hover { color: var(--bx-lien); }
+
+/* ---------- Pieces jointes ---------- */
+.dt-pj { display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 18px; }
+.dt-pj-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 280px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--bx-ligne-2);
+  border-radius: 6px;
+  background: #f8fafb;
+  font-size: 12.5px;
+  color: var(--bx-texte-2);
+  cursor: pointer;
+  transition: border-color 150ms, background 150ms, color 150ms;
+}
+.dt-pj-item:hover:not(:disabled) { border-color: #9cc7f3; background: #eef6ff; color: var(--bx-lien); }
+.dt-pj-item:disabled { cursor: default; }
+.dt-pj-item svg { color: var(--bx-gris); flex-shrink: 0; }
+.dt-pj-item:hover:not(:disabled) svg { color: var(--bx-accent); }
+.dt-pj-dl { margin-left: 2px; }
+.dt-pj-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-pj-item small { color: var(--bx-gris-clair); flex-shrink: 0; }
+
+.dt-corps { padding: 0 0 26px; }
+
+/* ---------- Reponse rapide ---------- */
+.dt-reponse {
+  margin: 0 -28px;
+  padding: 14px 28px;
+  border-top: 1px solid var(--bx-ligne);
+  border-radius: 0 0 12px 12px;
+  background: #f8fafb;
+}
+.dt-reponse-rapide {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--bx-police);
+  font-size: 13px;
+  color: var(--bx-gris);
+  text-align: left;
+  cursor: text;
+}
+.dt-reponse-rapide:hover { color: var(--bx-texte-2); }
+
+.dt-redaction { display: flex; flex-direction: column; gap: 10px; }
+.dt-redaction-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dt-redaction-tete strong { font-size: 13.5px; font-weight: 600; color: var(--bx-texte); }
+
+.dt-bascule {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 7px;
+  background: #e7ecef;
+}
+.dt-bascule button {
+  height: 24px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  font-family: var(--bx-police);
+  font-size: 12px;
+  color: var(--bx-texte-2);
+  cursor: pointer;
+}
+.dt-bascule button.actif { background: #fff; color: var(--bx-texte); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+
+.dt-ligne-champ { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--bx-gris); }
+.dt-ligne-champ .bx-champ { flex: 1; }
+
+.dt-redaction-pied { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.dt-redaction-pied small { margin-left: auto; font-size: 11.5px; color: var(--bx-gris-clair); }
+
+@media (max-width: 760px) {
+  .dt-mail { padding: 16px 16px 0; }
+  .dt-entete { flex-wrap: wrap; }
+  .dt-date { flex-basis: 100%; padding-left: 52px; }
+  .dt-actions { overflow-x: auto; }
+  .dt-actions::before { display: none; }
+  .dt-reponse { margin: 0 -16px; padding: 12px 16px; }
+  .dt-redaction-pied small { display: none; }
+}

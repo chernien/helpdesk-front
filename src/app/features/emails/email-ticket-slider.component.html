@@ -1,0 +1,225 @@
+<div class="bx-voile leger" (click)="fermer.emit()" aria-hidden="true"></div>
+
+<section class="bx-slider empile tk-slider" role="dialog" aria-modal="true" aria-label="Créer un ticket depuis l'e-mail">
+  <div class="bx-rail">
+    <button class="bx-rail-btn" type="button" (click)="fermer.emit()" title="Fermer (Échap)" aria-label="Fermer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+
+  <form class="tk-cols" [formGroup]="form" (ngSubmit)="soumettre()" novalidate>
+
+    <!-- ============ Formulaire (gauche) ============ -->
+    <div class="tk-gauche">
+      <div class="tk-defil">
+        <header class="tk-tete">
+          <span class="tk-prefixe">E-mail :</span>
+          <input class="tk-titre" formControlName="intitule" placeholder="Intitulé du ticket"
+                 aria-label="Intitulé du ticket" [class.invalide]="invalide('intitule')" />
+        </header>
+        @if (invalide('intitule')) {
+          <p class="tk-err tk-err-titre" role="alert">
+            {{ f.intitule.hasError('maxlength') ? '200 caractères maximum.' : "L'intitulé est requis." }}
+          </p>
+        }
+
+        <!-- Description -->
+        <section class="bx-carte tk-desc" [class.invalide]="invalide('description')">
+          <textarea class="tk-desc-texte" formControlName="description" rows="7"
+                    aria-label="Description" placeholder="Décrivez la demande…"></textarea>
+          <div class="tk-outils">
+            <label class="tk-outil" for="tk-fichier">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.5l-7.8 7.8a5 5 0 01-7-7L13 4.5a3.3 3.3 0 014.7 4.7L10 16.9a1.7 1.7 0 01-2.4-2.4l7.1-7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              Joindre un fichier
+            </label>
+            <input id="tk-fichier" type="file" class="sr-only" (change)="surFichier($event)" />
+            <button type="button" class="tk-outil" (click)="reprendreTexteEmail()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12a8 8 0 0114-5.3M20 12a8 8 0 01-14 5.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" /><path d="M18 3v4h-4M6 21v-4h4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              Reprendre le texte de l'e-mail
+            </button>
+            @if (fichier(); as fic) {
+              <span class="tk-fichier">
+                {{ fic.name }} <small>{{ tailleFichier(fic.size) }}</small>
+                <button type="button" (click)="fichier.set(null)" aria-label="Retirer le fichier">✕</button>
+              </span>
+            }
+          </div>
+          @if (erreurFichier()) { <p class="tk-err" role="alert">{{ erreurFichier() }}</p> }
+          @if (invalide('description')) { <p class="tk-err" role="alert">La description est requise.</p> }
+        </section>
+
+        <!-- Champs du ticket -->
+        <section class="bx-carte tk-champs">
+          <div class="tk-ligne">
+            <label for="tk-societe">Client <span class="req">*</span></label>
+            <div class="tk-valeur">
+              <hd-societe-autocomplete inputId="tk-societe" [invalide]="invalide('clientTiers')"
+                                       [valeurInitiale]="societeInitiale()" (choisie)="surSociete($event)" />
+              @if (rechercheExpediteur()) {
+                <p class="tk-aide">Recherche de l'expéditeur dans Divalto…</p>
+              } @else if (societeInitiale() && societe()?.tiers === societeInitiale()?.tiers) {
+                <p class="tk-aide ok">Reconnu d'après l'adresse de l'expéditeur.</p>
+              } @else if (invalide('clientTiers')) {
+                <p class="tk-err" role="alert">Le client est requis : tapez son nom puis choisissez-le.</p>
+              }
+            </div>
+          </div>
+
+          <div class="tk-ligne">
+            <label for="tk-contact">Contact <span class="req">*</span></label>
+            <div class="tk-valeur">
+              <select id="tk-contact" class="bx-champ" formControlName="contactEmail"
+                      [class.invalide]="invalide('contactEmail')"
+                      [attr.disabled]="!societe() || chargementContacts() ? true : null">
+                <option value="">
+                  @if (!societe()) { Choisissez d'abord un client }
+                  @else if (chargementContacts()) { Chargement des contacts… }
+                  @else if (contacts().length === 0) { Aucun contact avec e-mail }
+                  @else { — Sélectionner un contact — }
+                </option>
+                @if (contactsAvecCompte().length) {
+                  <optgroup label="✓ Avec compte Helpdesk">
+                    @for (c of contactsAvecCompte(); track c.email) { <option [value]="c.email">{{ libelleContact(c) }}</option> }
+                  </optgroup>
+                }
+                @if (contactsSansCompte().length) {
+                  <optgroup label="○ Sans compte — accès à créer">
+                    @for (c of contactsSansCompte(); track c.email) { <option [value]="c.email">{{ libelleContact(c) }}</option> }
+                  </optgroup>
+                }
+              </select>
+              @if (contactChoisi(); as c) {
+                @if (!c.aCompte) {
+                  <p class="tk-aide attention">
+                    Pas encore de compte : le client ne verra pas ce ticket.
+                    <button type="button" class="tk-lien" (click)="ouvrirCreationCompte()">Créer son accès</button>
+                  </p>
+                }
+              } @else if (invalide('contactEmail') && societe()) {
+                <p class="tk-err" role="alert">Le contact est requis.</p>
+              }
+            </div>
+          </div>
+
+          <div class="tk-ligne">
+            <label for="tk-produit">Produit <span class="req">*</span></label>
+            <div class="tk-valeur">
+              <select id="tk-produit" class="bx-champ" formControlName="produit" [class.invalide]="invalide('produit')">
+                <option value="">— Sélectionner —</option>
+                @for (p of produits(); track p.productId) { <option [value]="p.nom">{{ p.nom }}</option> }
+              </select>
+            </div>
+          </div>
+
+          <div class="tk-ligne">
+            <label for="tk-version">Version <span class="req">*</span></label>
+            <div class="tk-valeur tk-duo">
+              <input id="tk-version" class="bx-champ" formControlName="version" placeholder="Ex : 100C, v7…"
+                     [class.invalide]="invalide('version')" />
+              <select class="bx-champ" formControlName="module" aria-label="Module" [class.invalide]="invalide('module')">
+                <option value="">Module…</option>
+                @for (m of modules; track m) { <option [value]="m">{{ m }}</option> }
+              </select>
+            </div>
+          </div>
+
+          <div class="tk-ligne">
+            <span class="tk-lbl" id="tk-lbl-type">Type <span class="req">*</span></span>
+            <div class="tk-valeur">
+              <div class="tk-choix" role="radiogroup" aria-labelledby="tk-lbl-type" [class.invalide]="invalide('typeTicket')">
+                @for (t of typesTicket; track t) {
+                  <button type="button" role="radio" [attr.aria-checked]="f.typeTicket.value === t"
+                          [class.actif]="f.typeTicket.value === t" (click)="choisir('typeTicket', t)">{{ t }}</button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="tk-ligne">
+            <span class="tk-lbl" id="tk-lbl-imp">Importance <span class="req">*</span></span>
+            <div class="tk-valeur">
+              <div class="tk-choix" role="radiogroup" aria-labelledby="tk-lbl-imp" [class.invalide]="invalide('importance')">
+                @for (i of importances; track i) {
+                  <button type="button" role="radio" [attr.data-niveau]="i" [attr.aria-checked]="f.importance.value === i"
+                          [class.actif]="f.importance.value === i" (click)="choisir('importance', i)">{{ i }}</button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="tk-ligne">
+            <label for="tk-date">Date limite <span class="req">*</span></label>
+            <div class="tk-valeur">
+              <input id="tk-date" type="date" class="bx-champ tk-date" formControlName="dateEstimee"
+                     [class.invalide]="invalide('dateEstimee')" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Rappel de l'e-mail d'origine -->
+        @if (mail(); as m) {
+          <section class="bx-carte tk-champs tk-origine">
+            <div class="tk-ligne">
+              <span class="tk-lbl">E-mail :</span>
+              <span class="tk-valeur tk-info lien">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8" /><path d="M3 8l9 6 9-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+                {{ m.objet || '(Sans objet)' }}
+              </span>
+            </div>
+            <div class="tk-ligne">
+              <span class="tk-lbl">De :</span>
+              <span class="tk-valeur tk-info lien">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6" stroke="currentColor" stroke-width="1.8" /><path d="M5 20a7 7 0 0114 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+                {{ m.de || m.deEmail }} @if (m.de && m.deEmail) { &lt;{{ m.deEmail }}&gt; }
+              </span>
+            </div>
+            <div class="tk-ligne">
+              <span class="tk-lbl">Date :</span>
+              <span class="tk-valeur tk-info lien">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.8" /><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+                {{ formatDateLongue(m.date) }}
+              </span>
+            </div>
+          </section>
+        }
+      </div>
+
+      <footer class="tk-pied">
+        <button type="submit" class="bx-btn bx-btn-bleu tk-creer" [disabled]="envoi()">
+          @if (envoi()) { <span class="bx-spinner blanc" aria-hidden="true"></span> Création… } @else { Créer }
+        </button>
+        <button type="button" class="bx-btn bx-btn-lien" (click)="fermer.emit()">Annuler</button>
+        @if (erreur()) {
+          <span class="tk-err tk-err-pied" role="alert">{{ erreur() }}</span>
+        } @else {
+          <small>Le ticket sera lié à cet e-mail.</small>
+        }
+      </footer>
+    </div>
+
+    <!-- ============ E-mail d'origine (droite) ============ -->
+    @if (mail(); as m) {
+      <aside class="tk-droite" aria-label="E-mail d'origine">
+        <header class="tk-droite-tete">
+          <span class="bx-avatar moyen" [style.background]="couleurAvatar(m.de || m.deEmail)" aria-hidden="true">{{ initiales(m.de || m.deEmail) }}</span>
+          <div>
+            <strong>E-mail d'origine</strong>
+            <small>{{ m.de || m.deEmail }} · {{ formatDateLongue(m.date) }}</small>
+          </div>
+        </header>
+        <div class="tk-droite-corps">
+          <div class="tk-droite-carte">
+            <hd-email-corps [html]="m.corpsHtml" [texte]="m.corpsTexte" />
+          </div>
+        </div>
+      </aside>
+    }
+  </form>
+</section>
+
+@if (contactACreer(); as contact) {
+  @if (societe(); as soc) {
+    <hd-compte-contact-dialog [societe]="soc" [contact]="contact"
+                              (cree)="surCompteCree()" (ferme)="contactACreer.set(null)" />
+  }
+}

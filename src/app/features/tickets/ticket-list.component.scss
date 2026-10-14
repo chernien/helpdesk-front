@@ -7,6 +7,9 @@
 .anim-4 { animation: pageIn 380ms var(--ease-out) 180ms both; }
 
 .entete {
+  /* Au-dessus des cartes qui suivent : le menu « Exporter » s'ouvre par-dessus elles. */
+  position: relative;
+  z-index: 20;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -19,20 +22,24 @@
 /* ============================================================
    Cartes KPI : cliquables, elles filtrent la liste par etat.
    ============================================================ */
+/* 7 états : une ligne sur grand écran, 4 + 3 sur portable, 2 par ligne sur mobile */
 .kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--sp-4);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--sp-3);
   margin-bottom: var(--sp-4);
 }
+@media (max-width: 1440px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 700px)  { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .kpi {
   --accent: var(--info);
   --accent-bg: var(--info-bg);
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-4) var(--sp-5);
+  column-gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) calc(var(--sp-4) + 4px);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
@@ -66,12 +73,17 @@
 }
 .kpi.actif::before { width: 8px; }
 
-.t-ouvert { --accent: var(--info);  --accent-bg: var(--info-bg); }
-.t-cours  { --accent: var(--cours); --accent-bg: var(--cours-bg); }
-.t-dev    { --accent: var(--dev);   --accent-bg: var(--dev-bg); }
+/* Mêmes couleurs que les badges d'état et les boutons d'action du ticket */
+.t-ouvert  { --accent: var(--info);    --accent-bg: var(--info-bg); }
+.t-cours   { --accent: var(--cours);   --accent-bg: var(--cours-bg); }
+.t-dev     { --accent: var(--dev);     --accent-bg: var(--dev-bg); }
+.t-test    { --accent: #9333ea;        --accent-bg: #f3e8ff; }
+.t-attente { --accent: var(--warning); --accent-bg: var(--warning-bg); }
+.t-cloture { --accent: var(--success); --accent-bg: var(--success-bg); }
+.t-annule  { --accent: #64748b;        --accent-bg: #f1f5f9; }
 
 .kpi-ico {
-  width: 44px; height: 44px;
+  width: 38px; height: 38px;
   display: grid;
   place-items: center;
   border-radius: var(--r-md);
@@ -82,9 +94,9 @@
 }
 .kpi:hover .kpi-ico { transform: scale(1.08) rotate(-3deg); }
 
-.kpi-txt { display: flex; flex-direction: column; line-height: 1.15; flex: 1; }
-.kpi-txt strong { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.kpi-txt small { font-size: 13px; color: var(--muted); font-weight: 600; }
+.kpi-txt { display: flex; flex-direction: column; gap: 2px; line-height: 1.15; min-width: 0; }
+.kpi-txt strong { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.kpi-txt small { font-size: 12.5px; color: var(--muted); font-weight: 600; line-height: 1.25; }
 
 .kpi-fleche {
   color: var(--muted-soft);
@@ -105,7 +117,9 @@
   flex-wrap: wrap;
 }
 .champ-recherche { position: relative; flex: 1; min-width: 220px; }
-.champ-recherche svg {
+/* Admin : « Traités par » un membre de l'équipe — même habillage que la recherche */
+.champ-membre { position: relative; flex: 0 1 260px; min-width: 200px; }
+.champ-recherche svg, .champ-membre svg {
   position: absolute;
   left: 12px;
   top: 50%;
@@ -114,9 +128,21 @@
   pointer-events: none;
   transition: color var(--t-fast);
 }
-.champ-recherche:focus-within svg { color: var(--brand-600); }
-.champ-recherche .input { padding-left: 40px; }
+.champ-recherche:focus-within svg, .champ-membre:focus-within svg { color: var(--brand-600); }
+.champ-recherche .input, .champ-membre .input { padding-left: 40px; }
 .field-inline .select { min-width: 176px; cursor: pointer; }
+
+/* À partir de : année → mois → jour */
+.champ-periode { display: flex; align-items: center; gap: var(--sp-2); }
+.periode-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap;
+}
+.champ-periode .select { width: auto; cursor: pointer; }
+.champ-periode .select:nth-of-type(1) { min-width: 96px; }
+.champ-periode .select:nth-of-type(2) { min-width: 124px; }
+.champ-periode .select:nth-of-type(3) { min-width: 82px; }
+.champ-periode .select:disabled { cursor: not-allowed; opacity: .55; }
 
 .pagination {
   display: flex;
@@ -131,8 +157,15 @@
 
 @media (max-width: 640px) {
   .entete .btn { width: 100%; }
+  .export-zone { width: 100%; }
+  .btn-export { justify-content: center; }
+  .export-menu { left: 0; }
   .filtres { flex-direction: column; align-items: stretch; }
   .field-inline .select { width: 100%; }
+  .champ-membre { flex-basis: auto; }
+  .champ-periode { flex-wrap: wrap; }
+  .periode-label { flex-basis: 100%; }
+  .champ-periode .select { flex: 1 1 0; min-width: 0 !important; }
 }
 
 /* ============================================================
@@ -200,8 +233,73 @@
    Cartes-tickets
    ============================================================ */
 .liste { overflow: visible; }
+/* Rapport PDF + sélection (équipe) : une coche à gauche de chaque carte */
+.export-zone { position: relative; }
+.btn-export { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.btn-export .spinner { border-color: var(--border-strong); border-top-color: var(--brand-600); }
+.btn-export .chevron { margin-left: 2px; transition: transform var(--t-fast); }
+.btn-export .chevron.ouvert { transform: rotate(180deg); }
+
+/* Menu du format : PDF (rapport) ou Excel (données) */
+.export-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 30;
+  min-width: 170px; padding: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md);
+  box-shadow: var(--e3);
+  animation: rowIn 160ms var(--ease-out) both;
+}
+.export-choix {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 9px 10px; border: none; border-radius: 8px; background: none;
+  font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+  transition: background var(--t-fast);
+}
+.export-choix:hover, .export-choix:focus-visible { background: var(--surface-2); outline: none; }
+.export-ico {
+  width: 36px; height: 36px; flex-shrink: 0; display: grid; place-items: center;
+  border-radius: 8px; font-size: 10.5px; font-weight: 800; letter-spacing: .04em;
+}
+.export-ico.pdf { background: #fee2e2; color: #b91c1c; }
+.export-ico.xls { background: #dcfce7; color: #15803d; }
+.export-txt { font-size: 14px; }
+
+.selection-barre {
+  display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
+  margin: 0 0 var(--sp-3); padding-left: 4px;
+  font-size: 13.5px; color: var(--muted);
+}
+.coche { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.coche input, .tk-coche input { width: 18px; height: 18px; margin: 0; accent-color: var(--brand-600); cursor: pointer; }
+.selection-nb { font-weight: 700; color: var(--brand-700); }
+.lien {
+  border: none; background: none; padding: 0; cursor: pointer;
+  font: inherit; font-weight: 600; color: var(--brand-600);
+}
+.lien:hover { text-decoration: underline; }
+
+.tk-ligne.avec-coche { display: grid; grid-template-columns: 26px minmax(0, 1fr); align-items: center; gap: 8px; }
+.tk-coche { display: grid; place-items: center; align-self: stretch; cursor: pointer; }
+.tk-ligne.cochee .tk-lien { outline: 2px solid var(--brand-400); outline-offset: 2px; }
+
 .tickets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .tickets li { animation: rowIn 380ms var(--ease-out) both; }
+
+/* Suppression (admin) : bouton discret en haut à droite de la carte, hors du lien */
+.tk-ligne { position: relative; }
+.tk-suppr {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border: 1px solid transparent; border-radius: 8px;
+  background: transparent; color: var(--muted);
+  cursor: pointer; opacity: 0;
+  transition: opacity var(--t-fast), background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.tk-ligne:hover .tk-suppr, .tk-suppr:focus-visible { opacity: 1; }
+.tk-suppr:hover { background: var(--danger-bg); color: var(--danger); border-color: rgba(220, 38, 38, .25); }
+.tk-suppr:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
+/* Écrans tactiles : pas de survol, le bouton reste visible */
+@media (hover: none) { .tk-suppr { opacity: 1; } }
 
 .tk-lien { display: block; color: inherit; text-decoration: none; border-radius: 14px; }
 .tk-lien:hover { text-decoration: none; transform: translateY(-2px);
